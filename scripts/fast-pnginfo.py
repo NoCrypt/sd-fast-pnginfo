@@ -40,10 +40,10 @@ def on_ui_tabs():
     with gr.Row().style(equal_height=False):
       with gr.Column(variant='panel'):
         image = gr.Image(elem_id="fastpnginfo_image", label="Source", source="upload", interactive=True, type="pil")
-        image.change(lambda x: x, _js='(e)=>{console.log(e);fastpngprocess()}')
+        # image.change(lambda x: x, _js='(e)=>{console.log(e);fastpngprocess()}')
 
       with gr.Column(variant='panel'):
-        submit = gr.Button(label="Submit", elem_id="fastpnginfo_submit", interactive=True, variant="primary", visible=False)
+        submit = gr.Button(label="Submit", elem_id="fastpnginfo_submit", interactive=True, variant="primary", visible=True)
         fast_generation_info = gr.Textbox(label="Parameters", visible=True, elem_id="fastpnginfo_generation_info", interactive=False)
         with gr.Row():
           buttons = parameters_copypaste.create_buttons(["txt2img", "img2img", "inpaint", "extras"])

@@ -39,17 +39,10 @@ onUiLoaded(function () {
 
   let submit_el = gradioApp().querySelector("#fastpnginfo_submit");
 
-  let img_div_input_el = app.querySelector(
-    "#fastpnginfo_image"
-  );
-  
-  let tab_fast_pnginfo = app.querySelector(
-    "#tab_fast_pnginfo"
-  );
 
   if (img_input_el == null || txt_output_el == null) return;
 
-  async function fastpnginfo_process_image(e) {
+  async function fastpnginfo_process_image() {
     if (!fastpnginfo_loaded) {
       await load(txt_output_el);
     }
@@ -58,25 +51,28 @@ onUiLoaded(function () {
     let event = new Event("input", { bubbles: true });
     txt_output_el.dispatchEvent(event);
     
-    // wait till there is image element
-    let img_el = gradioApp().querySelector(
-      "#fastpnginfo_image > div[data-testid='image'] > div > img"
-    );
-    while (img_el == null) {
-      await new Promise((r) => setTimeout(r, 100));
-      img_el = gradioApp().querySelector(
-        "#fastpnginfo_image > div[data-testid='image'] > div > img"
-      );
-    }
-    await new Promise((r) => setTimeout(r, 100));
+    // // wait till there is image element
+    // let img_el = gradioApp().querySelector(
+    //   "#fastpnginfo_image > div[data-testid='image'] > div > img"
+    // );
+    // while (img_el == null) {
+    //   await new Promise((r) => setTimeout(r, 100));
+    //   img_el = gradioApp().querySelector(
+    //     "#fastpnginfo_image > div[data-testid='image'] > div > img"
+    //   );
+    // }
+    // await new Promise((r) => setTimeout(r, 100));
 
-    submit_el.click();
+    // submit_el.click();
   }
 
-  fastpngprocess = fastpnginfo_process_image;
-  // img_input_el.addEventListener("change", fastpnginfo_process_image);
+  img_input_el.addEventListener("change", fastpnginfo_process_image);
   
   submit_el.addEventListener("click", async function (e) {
+    if (!fastpnginfo_loaded) {
+      await load(txt_output_el);
+    }
+    
     let img_el = gradioApp().querySelector(
       "#fastpnginfo_image > div[data-testid='image'] > div > img"
     );

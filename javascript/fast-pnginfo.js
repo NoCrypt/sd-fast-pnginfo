@@ -1,6 +1,6 @@
 fastpnginfo_loaded = false;
 exifr = null;
-async function load(txt_output_el) {
+async function load_fastpnginfo(txt_output_el) {
   if (exifr == null) {
     let paths = gradioApp().querySelector("#fastpng_js_path");
     const scripts = paths.textContent.trim().split("\n");
@@ -44,7 +44,7 @@ onUiLoaded(function () {
 
   async function fastpnginfo_process_image() {
     if (!fastpnginfo_loaded) {
-      await load(txt_output_el);
+      await load_fastpnginfo(txt_output_el);
     }
     // e.preventDefault();
     txt_output_el.value = "";
@@ -70,7 +70,7 @@ onUiLoaded(function () {
   
   submit_el.addEventListener("click", async function (e) {
     if (!fastpnginfo_loaded) {
-      await load(txt_output_el);
+      await load_fastpnginfo(txt_output_el);
     }
     
     let img_el = gradioApp().querySelector(

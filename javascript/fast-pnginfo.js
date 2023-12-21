@@ -36,8 +36,6 @@ onUiLoaded(function () {
     "#fastpnginfo_generation_info  > label > textarea"
   );
 
-  let submit_el = gradioApp().querySelector("#fastpnginfo_submit");
-
   if (img_input_el == null || txt_output_el == null) return;
 
   async function fastpnginfo_process_image() {
@@ -65,17 +63,6 @@ onUiLoaded(function () {
 
   img_input_el.addEventListener("change", fastpnginfo_process_image);
 
-  submit_el.addEventListener("click", async function (e) {
-    if (!fastpnginfo_loaded) {
-      await load_fastpnginfo(txt_output_el);
-    }
-
-    let img_el = gradioApp().querySelector(
-      "#fastpnginfo_image > div[data-testid='image'] > div > img"
-    );
-
-    await processImage(img_el, txt_output_el);
-  });
 });
 
 async function processImage(img_el, txt_output_el) {

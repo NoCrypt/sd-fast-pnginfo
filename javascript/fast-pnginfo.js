@@ -1,10 +1,11 @@
 fastpnginfo_loaded = false;
 exifr = null;
+
 async function load_fastpnginfo(txt_output_el) {
   if (exifr == null) {
     let paths = gradioApp().querySelector("#fastpng_js_path");
     const scripts = paths.textContent.trim().split("\n");
-    scripts.shift()
+    scripts.shift();
     const df = document.createDocumentFragment();
     for (let src of scripts) {
       const script = document.createElement("script");
@@ -21,9 +22,7 @@ async function load_fastpnginfo(txt_output_el) {
   }
 }
 
-
-fastpngprocess = function(){};
-
+fastpngprocess = function () {};
 
 onUiLoaded(function () {
   const app = gradioApp();
@@ -39,59 +38,58 @@ onUiLoaded(function () {
 
   let submit_el = gradioApp().querySelector("#fastpnginfo_submit");
 
-
   if (img_input_el == null || txt_output_el == null) return;
 
   async function fastpnginfo_process_image() {
     if (!fastpnginfo_loaded) {
       await load_fastpnginfo(txt_output_el);
     }
-    // e.preventDefault();
+
     txt_output_el.value = "";
     let event = new Event("input", { bubbles: true });
     txt_output_el.dispatchEvent(event);
-    
-    // // wait till there is image element
-    // let img_el = gradioApp().querySelector(
-    //   "#fastpnginfo_image > div[data-testid='image'] > div > img"
-    // );
-    // while (img_el == null) {
-    //   await new Promise((r) => setTimeout(r, 100));
-    //   img_el = gradioApp().querySelector(
-    //     "#fastpnginfo_image > div[data-testid='image'] > div > img"
-    //   );
-    // }
-    // await new Promise((r) => setTimeout(r, 100));
 
-    // submit_el.click();
+    let img_el = gradioApp().querySelector(
+      "#fastpnginfo_image > div[data-testid='image'] > div > img"
+    );
+
+    while (img_el == null) {
+      await new Promise((r) => setTimeout(r, 100));
+      img_el = gradioApp().querySelector(
+        "#fastpnginfo_image > div[data-testid='image'] > div > img"
+      );
+    }
+
+    await processImage(img_el, txt_output_el);
   }
 
   img_input_el.addEventListener("change", fastpnginfo_process_image);
-  
+
   submit_el.addEventListener("click", async function (e) {
     if (!fastpnginfo_loaded) {
       await load_fastpnginfo(txt_output_el);
     }
-    
+
     let img_el = gradioApp().querySelector(
       "#fastpnginfo_image > div[data-testid='image'] > div > img"
     );
-    //  console.log("input argument", img_el);
-    var exif = await exifr?.default.parse(img_el);
 
-    if (exif.parameters) {
-      // console.log("exif.parameters", exif.parameters);
-      txt_output_el.value = exif.parameters;
-    } else {
-      if (exif){
-        // console.log("exif", exif);
-        txt_output_el.value = "exif data found, but no parameters\n"+JSON.stringify(exif);
-      } else {
-        // console.log("no exif data found");
-        txt_output_el.value = "no exif data found";
-      }
-    }
-    let event = new Event("input", { bubbles: true });
-    txt_output_el.dispatchEvent(event);
-  })
-})
+    await processImage(img_el, txt_output_el);
+  });
+});
+
+async function processImage(img_el, txt_output_el) {
+  var exif = await exifr?.default.parse(img_el);
+
+  if (exif && exif.parameters) {
+    txt_output_el.value = exif.parameters;
+  } else {
+    txt_output_el.value =
+      exif
+        ? "EXIF data found, but no parameters\n" + JSON.stringify(exif)
+        : "No EXIF data found";
+  }
+
+  let event = new Event("input", { bubbles: true });
+  txt_output_el.dispatchEvent(event);
+}

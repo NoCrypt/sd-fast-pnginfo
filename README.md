@@ -8,4 +8,5 @@ Please note that the code for this extension may be a little janky, and I would 
 
 
 ## Preview
-![Screenshot_3](https://github.com/pantat88/sd-fast-pnginfo/assets/132797949/56610683-7781-46dd-b703-4403cfbb4417)
+
+<img src="https://imgur.com/X5O0PLb.gif"/>

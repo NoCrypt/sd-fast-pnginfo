@@ -8,4 +8,4 @@ Please note that the code for this extension may be a little janky, and I would 
 
 
 ## Preview
-![Preview](https://s3.amazonaws.com/moonup/production/uploads/1678368022395-62de447b4dcb9177d4bd876c.png)
+![Screenshot_3](https://github.com/pantat88/sd-fast-pnginfo/assets/132797949/56610683-7781-46dd-b703-4403cfbb4417)

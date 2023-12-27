@@ -1,5 +1,6 @@
 fastpnginfo_loaded = false;
 exifr = null;
+
 async function load_fastpnginfo(txt_output_el) {
   if (exifr == null) {
     let paths = gradioApp().querySelector("#fastpng_js_path");
@@ -16,82 +17,68 @@ async function load_fastpnginfo(txt_output_el) {
     txt_output_el.appendChild(df);
     dummyexifr = await import(`/file=${scripts[0]}`);
     fastpnginfo_loaded = true;
-    console.log("fastpnginfo loaded");
-    console.log("exifr", exifr);
   }
 }
-
-
-fastpngprocess = function(){};
-
+fastpngprocess = function () {};
 
 onUiLoaded(function () {
   const app = gradioApp();
   if (!app || app === document) return;
-
   let img_input_el = app.querySelector(
     "#fastpnginfo_image > div > div > input"
   );
-
   let txt_output_el = gradioApp().querySelector(
-    "#fastpnginfo_generation_info  > label > textarea"
+    "#fastpnginfo_geninfo  > label > textarea"
   );
-
   let submit_el = gradioApp().querySelector("#fastpnginfo_submit");
-
-
   if (img_input_el == null || txt_output_el == null) return;
-
   async function fastpnginfo_process_image() {
-    if (!fastpnginfo_loaded) {
-      await load_fastpnginfo(txt_output_el);
+    try {
+      if (!fastpnginfo_loaded) {
+        await load_fastpnginfo(txt_output_el);
+      }
+      txt_output_el.value = "";
+      let event = new Event("input", { bubbles: true });
+      txt_output_el.dispatchEvent(event);
+      let img_el = gradioApp().querySelector(
+        "#fastpnginfo_image > div[data-testid='image'] > div > img"
+      );
+      while (img_el == null) {
+        await new Promise((r) => setTimeout(r, 100));
+        img_el = gradioApp().querySelector(
+          "#fastpnginfo_image > div[data-testid='image'] > div > img"
+        );
+      }
+      await new Promise((r) => setTimeout(r, 100));
+      submit_el.click();
+    } catch (error) {
+      console.error("Error in fastpnginfo_process_image:", error);
+      throw error; 
     }
-    // e.preventDefault();
-    txt_output_el.value = "";
-    let event = new Event("input", { bubbles: true });
-    txt_output_el.dispatchEvent(event);
-    
-    // // wait till there is image element
-    // let img_el = gradioApp().querySelector(
-    //   "#fastpnginfo_image > div[data-testid='image'] > div > img"
-    // );
-    // while (img_el == null) {
-    //   await new Promise((r) => setTimeout(r, 100));
-    //   img_el = gradioApp().querySelector(
-    //     "#fastpnginfo_image > div[data-testid='image'] > div > img"
-    //   );
-    // }
-    // await new Promise((r) => setTimeout(r, 100));
-
-    // submit_el.click();
   }
-
   img_input_el.addEventListener("change", fastpnginfo_process_image);
-  
   submit_el.addEventListener("click", async function (e) {
     if (!fastpnginfo_loaded) {
       await load_fastpnginfo(txt_output_el);
     }
-    
     let img_el = gradioApp().querySelector(
       "#fastpnginfo_image > div[data-testid='image'] > div > img"
     );
-    //  console.log("input argument", img_el);
-    var exif = await exifr?.default.parse(img_el);
-
-    if (exif.parameters) {
-      // console.log("exif.parameters", exif.parameters);
-      txt_output_el.value = exif.parameters;
-    } else {
-      if (exif){
-        // console.log("exif", exif);
-        txt_output_el.value = "exif data found, but no parameters\n"+JSON.stringify(exif);
+    try {
+      var exif = await exifr?.default.parse(img_el);
+      if (exif.parameters) {
+        txt_output_el.value = exif.parameters;
       } else {
-        // console.log("no exif data found");
-        txt_output_el.value = "no exif data found";
+        if (exif) {
+          txt_output_el.value = "exif data found, but no parameters\n" + JSON.stringify(exif);
+        } else {
+          txt_output_el.value = "no exif data found";
+        }
       }
+      let event = new Event("input", { bubbles: true });
+      txt_output_el.dispatchEvent(event);
+    } catch (error) {
+      console.log("image clearead");
     }
-    let event = new Event("input", { bubbles: true });
-    txt_output_el.dispatchEvent(event);
-  })
-})
+  });
+});

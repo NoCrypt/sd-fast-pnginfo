@@ -8,4 +8,5 @@ Please note that the code for this extension may be a little janky, and I would 
 
 
 ## Preview
-![Preview](https://s3.amazonaws.com/moonup/production/uploads/1678368022395-62de447b4dcb9177d4bd876c.png)
+
+<img src="https://imgur.com/X5O0PLb.gif"/>

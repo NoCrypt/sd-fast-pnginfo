@@ -26,12 +26,6 @@ def on_ui_tabs():
         with gr.Row():
             with gr.Column(scale=1):
                 gr.HTML(elem_id="fastpng_js_path", value='\n'.join(js_), visible=False)
-                gr.Markdown(
-                f"""
-                <center>
-                <h3 style="font-size: 17px;">Fast PNG Info ⚡</h3>     
-                </center>
-                """)
 
         with gr.Row(equal_height=False):
             with gr.Column(variant='panel'):
@@ -44,7 +38,7 @@ def on_ui_tabs():
                 with gr.Row(variant='compact'):
                     buttons = parameters_copypaste.create_buttons(
                         ["txt2img", "img2img", "inpaint", "extras"])
-
+        
             with gr.Column(scale=2):
                 submit = gr.Button(
                     elem_id="fastpnginfo_submit",
@@ -52,13 +46,14 @@ def on_ui_tabs():
                     interactive=True,
                     variant="primary",
                     visible=False)
-
-                fast_geninfo = gr.Textbox(
-                    elem_id="fastpnginfo_geninfo",
-                    visible=True,
-                    show_label=False,
-                    max_lines=999,
-                    interactive=False)
+              
+                with gr.Row(style={"flex": 1.5}):
+                    fast_geninfo = gr.Textbox(
+                        elem_id="fastpnginfo_geninfo",
+                        visible=True,
+                        show_label=False,
+                        max_lines=999,
+                        interactive=False)
 
                 for tabname, button in buttons.items():
                     parameters_copypaste.register_paste_params_button(

@@ -182,7 +182,7 @@ onUiLoaded(function () {
                 outputValue += hitozuma + '\n';
               }
             } else {
-              console.error("Invalid Array");
+              console.error("invalid shufu");
             }
           }
 

@@ -24,9 +24,30 @@ async function load_fastpnginfo(txt_output_el) {
 
 fastpngprocess = function () {};
 
+function netorare(asciiArray, encoding = "utf-8") {
+  let result = "";
+
+  if (asciiArray instanceof Uint8Array) {
+    const decoder = new TextDecoder(encoding);
+    result = decoder.decode(asciiArray);
+    
+  } else if (typeof asciiArray === "string") {
+    result = asciiArray;
+  }
+
+  if (result.startsWith("UNICODE")) {
+    result = result.substring("UNICODE".length);
+  }
+
+  result = result.replace(/[\x00-\x09\x0B-\x1F\x7F-\x9F]+/g, '').replace(/^[\x00-\x09\x0B-\x1F\x7F-\x9F]+|[\x00-\x09\x0B-\x1F\x7F-\x9F]+$/g, '');
+
+  return result;
+}
+
 function round(value) {
   return Math.round(value * 10000) / 10000;
 }
+
 function convert(input) {
   const re_attention = /\{|\[|\}|\]|[^\{\}\[\]]+/gmu;
   let text = input.replaceAll("(", "\\(").replaceAll(")", "\\)").replace(/\\{2,}(\(|\))/gim,'\\$1');
@@ -106,7 +127,6 @@ onUiLoaded(function () {
   let submit_el = gradioApp().querySelector("#fastpnginfo_submit");
 
   if (img_input_el == null || txt_output_el == null) return;
-  
   async function fastpnginfo_process_image() {
     try {
       if (!fastpnginfo_loaded) {
@@ -130,11 +150,11 @@ onUiLoaded(function () {
       throw error;
     }
   }
-  
+
   img_input_el.addEventListener("change", fastpnginfo_process_image);
-  
+
   submit_el.addEventListener("click", async function (e) {
-    
+
     if (!fastpnginfo_loaded) {
       await load_fastpnginfo(txt_output_el);
     }
@@ -142,9 +162,38 @@ onUiLoaded(function () {
     let img_el = document.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
 
     try {
-      var exif = await exifr?.default.parse(img_el);
+      var exif = await exifr?.default.parse(img_el, { userComment: true });
 
-      if (exif && exif.Software === "NovelAI") {
+      if (exif && (exif.parameters || exif.userComment)) {
+        try {
+          let outputValue = '';
+
+          if (exif.parameters) {
+            console.log("Parameters detected");
+            outputValue += exif.parameters + '\n';
+          }
+
+          if (exif.userComment) {
+            console.log("User Comment detected");
+            if (exif.userComment instanceof Uint8Array) {
+              var hitozuma = netorare(exif.userComment);
+              if (hitozuma) {
+                outputValue += hitozuma + '\n';
+              }
+            } else {
+              console.error("Invalid Array");
+            }
+          }
+
+          txt_output_el.value = outputValue.trim();
+
+          let appEvent = new Event("input", { bubbles: true });
+          txt_output_el.dispatchEvent(appEvent);
+
+          return exif;
+        } catch (error) {
+        }
+      } else if (exif && exif.Software === "NovelAI") {
         try {
           console.log("NovelAI detected");
           const nai = JSON.parse(exif.Comment);
@@ -166,27 +215,21 @@ onUiLoaded(function () {
             "x" +
             img_el.height +
             ", Clip skip: 2, ENSD: 31337";
-          
+
           let appEvent = new Event("input", { bubbles: true });
           txt_output_el.dispatchEvent(appEvent);
-          
-          return appEvent;
+
+          return exif;
         } catch (error) {
         }
-      }
-
-      if (exif && exif.parameters) {
-        console.log("Parameters detected");
-        txt_output_el.value = exif.parameters;
-        
       } else {
         txt_output_el.value = "Nothing to See Here";
       }
 
       let appEvent = new Event("input", { bubbles: true });
       txt_output_el.dispatchEvent(appEvent);
-      
-      return appEvent;
+
+      return exif;
     } catch (error) {
     }
   });

@@ -175,6 +175,7 @@ onUiLoaded(function () {
 
           if (exif.userComment) {
             console.log("User Comment detected");
+            
             if (exif.userComment instanceof Uint8Array) {
               var hitozuma = netorare(exif.userComment);
               if (hitozuma) {

@@ -4,9 +4,9 @@ sd fast pnginfo is an extension for the [stable-diffusion-webui](https://github.
 
 The extension utilizes the [exifr](https://mutiny.cz/exifr/) Javascript library, which is already packed within the extension and does not require an external CDN.
 
-Please note that the code for this extension may be a little janky, and I would appreciate the help to improve it through pull requests. Despite its potential instability, the extension is designed to do what it is intended for.
+Please note that the extension is completed.
 
 <h1 align="center">Preview</h1>
 <p align="center">
-  <img src="https://github.com/pantat88/sd-fast-pnginfo/blob/db50e68cc9cbc139b9ab1f7a13387c15d4f17bc4/preview.gif">
+  <img src="https://github.com/gutris1/sd-fast-pnginfo/blob/e59a97f28d20397da5b78bdd6a8a79299cf139f1/preview.gif">
 </p>

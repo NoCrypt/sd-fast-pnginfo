@@ -52,7 +52,7 @@ def on_ui_tabs():
                         elem_id="fastpnginfo_geninfo",
                         visible=True,
                         show_label=False,
-                        max_lines=999,
+                        max_lines=16,
                         interactive=False)
 
                 for tabname, button in buttons.items():
@@ -63,13 +63,13 @@ def on_ui_tabs():
                             source_text_component=fast_geninfo,
                             source_image_component=image))
 
-            js = """
-            (e) => {  
-                fastpngprocess(e);
-                document.querySelector("#fastpnginfo_submit").click();
-                document.querySelector("#fastpnginfo_geninfo").style.visibility = "visible";
-            }
-            """
+        js = """
+        (e) => {  
+            fastpngprocess(e);
+            document.querySelector("#fastpnginfo_submit").click();
+            document.querySelector("#fastpnginfo_geninfo").style.visibility = "visible";
+        }
+        """
         image.change(fn=None, inputs=[image], _js=js, outputs=[fast_geninfo])
         
     return [(fast_pnginfo, "Fast PNG Info", "fast_pnginfo")]

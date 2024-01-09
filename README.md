@@ -8,5 +8,5 @@ Please note that the extension is completed.
 
 <h1 align="center">Preview</h1>
 <p align="center">
-  <img src="https://github.com/pantat88/sd-fast-pnginfo/blob/db50e68cc9cbc139b9ab1f7a13387c15d4f17bc4/preview.gif">
+  <img src="https://github.com/gutris1/sd-fast-pnginfo/blob/e59a97f28d20397da5b78bdd6a8a79299cf139f1/preview.gif">
 </p>

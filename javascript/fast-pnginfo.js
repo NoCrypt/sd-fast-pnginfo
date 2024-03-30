@@ -129,9 +129,7 @@ onUiLoaded(function () {
   if (img_input_el == null || txt_output_el == null) return;
   async function fastpnginfo_process_image() {
     try {
-      if (!fastpnginfo_loaded) {
-        await load_fastpnginfo(txt_output_el);
-      }
+      await load_fastpnginfo(txt_output_el);
 
       txt_output_el.value = "";
       let event = new Event("input", { bubbles: true });

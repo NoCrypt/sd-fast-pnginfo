@@ -24,44 +24,22 @@ def on_ui_tabs():
     
     with gr.Blocks(analytics_enabled=False) as fast_pnginfo:
         with gr.Row():
-            with gr.Column(scale=1):
-                gr.HTML(elem_id="fastpng_js_path", value='\n'.join(js_), visible=False)
+            gr.HTML(elem_id="fastpng_js_path", value='\n'.join(js_), visible=False)
+            submit = gr.Button(elem_id="fastpnginfo_submit", label="submit", interactive=True, variant="primary", visible=False)
 
         with gr.Row(equal_height=False):
             with gr.Column(variant='panel'):
-                image = gr.Image(
-                    elem_id="fastpnginfo_image",
-                    source="upload",
-                    interactive=True,
-                    type="pil")
+                image = gr.Image(elem_id="fastpnginfo_image", source="upload", interactive=True, type="pil")
 
                 with gr.Row(variant='compact'):
-                    buttons = parameters_copypaste.create_buttons(
-                        ["txt2img", "img2img", "inpaint", "extras"])
+                    buttons = parameters_copypaste.create_buttons(["txt2img", "img2img", "inpaint", "extras"])
         
             with gr.Column(scale=2):
-                submit = gr.Button(
-                    elem_id="fastpnginfo_submit",
-                    label="submit",
-                    interactive=True,
-                    variant="primary",
-                    visible=False)
-              
-                with gr.Row(style={"flex": 1.5}):
-                    fast_geninfo = gr.Textbox(
-                        elem_id="fastpnginfo_geninfo",
-                        visible=True,
-                        show_label=False,
-                        max_lines=16,
-                        interactive=False)
+                fast_geninfo = gr.Textbox(elem_id="fastpnginfo_geninfo", visible=True, show_label=False, max_lines=16, interactive=False)
 
                 for tabname, button in buttons.items():
-                    parameters_copypaste.register_paste_params_button(
-                        parameters_copypaste.ParamBinding(
-                        paste_button=button,
-                            tabname=tabname,
-                            source_text_component=fast_geninfo,
-                            source_image_component=image))
+                    parameters_copypaste.register_paste_params_button(parameters_copypaste.ParamBinding(
+                        paste_button=button,tabname=tabname,source_text_component=fast_geninfo,source_image_component=image))
 
         js = """
         (e) => {  

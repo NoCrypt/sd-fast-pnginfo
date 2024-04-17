@@ -1,8 +1,9 @@
 fastpnginfo_loaded = false;
+ExifReader = null;
 exifr = null;
 
 async function load_fastpnginfo(txt_output_el) {
-  if (exifr == null) {
+  if (ExifReader == null || exifr == null ) {
     let paths = gradioApp().querySelector("#fastpng_js_path");
     const scripts = paths.textContent.trim().split("\n");
     scripts.shift();
@@ -17,14 +18,17 @@ async function load_fastpnginfo(txt_output_el) {
     }
 
     txt_output_el.appendChild(df);
+
     await import(`/file=${scripts[0]}`);
+    await import(`/file=${scripts[1]}`);
+
     fastpnginfo_loaded = true;
   }
 }
 
 fastpngprocess = function () {};
 
-function netorare(asciiArray, encoding = "utf-8") {
+function DecodeUserComment(asciiArray, encoding = "utf-8") {
   let result = "";
 
   if (asciiArray instanceof Uint8Array) {
@@ -48,7 +52,7 @@ function round(value) {
   return Math.round(value * 10000) / 10000;
 }
 
-function convert(input) {
+function convertNAI(input) {
   const re_attention = /\{|\[|\}|\]|[^\{\}\[\]]+/gmu;
   let text = input.replaceAll("(", "\\(").replaceAll(")", "\\)").replace(/\\{2,}(\(|\))/gim,'\\$1');
 
@@ -119,29 +123,26 @@ function convert(input) {
 
 onUiLoaded(function () {
   const app = gradioApp();
-
   if (!app || app === document) return;
 
   let img_input_el = app.querySelector("#fastpnginfo_image > div > div > input");
-  let txt_output_el = gradioApp().querySelector("#fastpnginfo_geninfo  > label > textarea");
-  let submit_el = gradioApp().querySelector("#fastpnginfo_submit");
+  let txt_output_el = app.querySelector("#fastpnginfo_geninfo  > label > textarea");
+  let submit_el = app.querySelector("#fastpnginfo_submit");
 
   if (img_input_el == null || txt_output_el == null) return;
+  
   async function fastpnginfo_process_image() {
     try {
-      if (!fastpnginfo_loaded) {
-        await load_fastpnginfo(txt_output_el);
-      }
+      await load_fastpnginfo(txt_output_el);
 
-      txt_output_el.value = "";
       let event = new Event("input", { bubbles: true });
       txt_output_el.dispatchEvent(event);
 
-      let img_el = gradioApp().querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
+      let img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
 
       while (img_el == null) {
-        await new Promise((r) => setTimeout(r, 100));
-        img_el = gradioApp().querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
+        await new Promise((r) => setTimeout(r, 200));
+        img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
       }
 
       await new Promise((r) => setTimeout(r, 100));
@@ -150,88 +151,87 @@ onUiLoaded(function () {
       throw error;
     }
   }
-
+  
   img_input_el.addEventListener("change", fastpnginfo_process_image);
-
+  
   submit_el.addEventListener("click", async function (e) {
-
     if (!fastpnginfo_loaded) {
       await load_fastpnginfo(txt_output_el);
     }
-
+    
     let img_el = document.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
-
+    
     try {
-      var exif = await exifr?.default.parse(img_el, { userComment: true });
+      let response = await fetch(img_el.src);
+      let img_blob = await response.blob();
+      let arrayBuffer = await img_blob.arrayBuffer();
+      let tags = ExifReader.load(arrayBuffer);
+      let exif = await exifr?.parse(img_el, { userComment: true });
+      txt_output_el.value = '';
 
-      if (exif && (exif.parameters || exif.userComment)) {
-        try {
-          let outputValue = '';
-
-          if (exif.parameters) {
-            console.log("Parameters detected");
-            outputValue += exif.parameters + '\n';
-          }
-
-          if (exif.userComment) {
-            console.log("User Comment detected");
-            
-            if (exif.userComment instanceof Uint8Array) {
-              var hitozuma = netorare(exif.userComment);
-              if (hitozuma) {
-                outputValue += hitozuma + '\n';
-              }
-            } else {
-              console.error("invalid shufu");
-            }
-          }
-
-          txt_output_el.value = outputValue.trim();
-
-          let appEvent = new Event("input", { bubbles: true });
-          txt_output_el.dispatchEvent(appEvent);
-
-          return exif;
-        } catch (error) {
-        }
-      } else if (exif && exif.Software === "NovelAI") {
-        try {
-          console.log("NovelAI detected");
-          const nai = JSON.parse(exif.Comment);
-          nai.sampler = "Euler a";
-          txt_output_el.value =
-            convert(exif["Description"]) +
-            "\nNegative prompt: " +
-            nai["uc"] +
-            "\nSteps: " +
-            nai["steps"] +
-            ", Sampler: " +
-            nai.sampler +
-            ", CFG scale: " +
-            nai["scale"] +
-            ", Seed: " +
-            nai["seed"] +
-            ", Size: " +
-            img_el.width +
-            "x" +
-            img_el.height +
-            ", Clip skip: 2, ENSD: 31337";
-
-          let appEvent = new Event("input", { bubbles: true });
-          txt_output_el.dispatchEvent(appEvent);
-
-          return exif;
-        } catch (error) {
-        }
-      } else {
-        txt_output_el.value = "Nothing to See Here";
+      if (tags && tags.parameters) {
+        console.log("Parameters detected");
+        
+        txt_output_el.value = tags.parameters.description;
+        let appEvent = new Event("input", { bubbles: true });
+        txt_output_el.dispatchEvent(appEvent);
+        tags = new ArrayBuffer(0);
+        return tags;
       }
-
+      
+      if (exif && exif.userComment) {
+        console.log("UserComment detected");
+        
+        if (exif.userComment instanceof Uint8Array) {
+          var commentvalue = DecodeUserComment(exif.userComment);
+          
+          if (commentvalue) {
+            txt_output_el.value = commentvalue.trim();
+            let appEvent = new Event("input", { bubbles: true });
+            txt_output_el.dispatchEvent(appEvent);
+            return exif;
+          }
+          
+        } else {
+          console.error("invalid instance");
+        }
+      }
+      
+      if (exif && exif.Software === "NovelAI") {
+        console.log("NovelAI detected");
+        
+        const nai = JSON.parse(exif.Comment);
+        nai.sampler = "Euler a";
+        txt_output_el.value =
+          convertNAI(exif.Description) +
+          "\nNegative prompt: " +
+          nai.uc +
+          "\nSteps: " +
+          nai.steps +
+          ", Sampler: " +
+          nai.sampler +
+          ", CFG scale: " +
+          nai.scale +
+          ", Seed: " +
+          nai.seed +
+          ", Size: " +
+          img_el.width +
+          "x" +
+          img_el.height +
+          ", Clip skip: 2, ENSD: 31337";
+        
+        let appEvent = new Event("input", { bubbles: true });
+        txt_output_el.dispatchEvent(appEvent);
+        return exif;
+      }
+      
+      txt_output_el.value = "Nothing to See Here";
       let appEvent = new Event("input", { bubbles: true });
       txt_output_el.dispatchEvent(appEvent);
-
       return exif;
-    } catch (error) {
+      
+    } finally {
+      return app;
     }
   });
 });

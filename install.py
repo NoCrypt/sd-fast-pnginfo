@@ -1,7 +1,6 @@
 from pathlib import Path
 import subprocess
 import shutil
-import os
 
 _dir = Path(__file__).parent / "js"
 _lib = _dir / "exif-reader.js"

@@ -1,4 +1,5 @@
 import modules.generation_parameters_copypaste as parameters_copypaste
+from modules.ui_components import FormRow, FormColumn
 from modules import script_callbacks
 from modules import extensions
 import gradio as gr
@@ -23,24 +24,23 @@ def on_ui_tabs():
     js_.insert(0, ext.path)
     
     with gr.Blocks(analytics_enabled=False) as fast_pnginfo:
-        with gr.Row():
-            gr.HTML(elem_id="fastpng_js_path", value='\n'.join(js_), visible=False)
-            submit = gr.Button(elem_id="fastpnginfo_submit", label="submit", interactive=True, variant="primary", visible=False)
+        gr.HTML(elem_id="fastpng_js_path", value='\n'.join(js_), visible=False)
+        submit = gr.Button(elem_id="fastpnginfo_submit", label="submit", interactive=True, visible=False)
 
-        with gr.Row(equal_height=False):
-            with gr.Column(variant='panel'):
-                image = gr.Image(elem_id="fastpnginfo_image", source="upload", interactive=True, type="pil")
+        with FormRow(equal_height=False):
+            with FormColumn(variant='panel'):
+                image = gr.Image(elem_id="fastpnginfo_image", source="upload", interactive=True, type="pil", show_label=False)
 
                 with gr.Row(variant='compact'):
                     buttons = parameters_copypaste.create_buttons(["txt2img", "img2img", "inpaint", "extras"])
         
-            with gr.Column(scale=2):
+            with FormColumn(scale=2):
                 fast_geninfo = gr.Textbox(elem_id="fastpnginfo_geninfo", visible=True, show_label=False, max_lines=16, interactive=False)
 
                 for tabname, button in buttons.items():
                     parameters_copypaste.register_paste_params_button(parameters_copypaste.ParamBinding(
                         paste_button=button,tabname=tabname,source_text_component=fast_geninfo,source_image_component=image))
-
+            
         js = """
         (e) => {  
             fastpngprocess(e);
@@ -48,8 +48,10 @@ def on_ui_tabs():
             document.querySelector("#fastpnginfo_geninfo").style.visibility = "visible";
         }
         """
+        
         image.change(fn=None, inputs=[image], _js=js, outputs=[fast_geninfo])
         
     return [(fast_pnginfo, "Fast PNG Info", "fast_pnginfo")]
 
 script_callbacks.on_ui_tabs(on_ui_tabs)
+print(f"\033[38;5;173m▶\033[0m Fast PNG Info")

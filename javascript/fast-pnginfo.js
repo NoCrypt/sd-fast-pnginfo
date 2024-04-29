@@ -1,9 +1,8 @@
 fastpnginfo_loaded = false;
 ExifReader = null;
-exifr = null;
 
 async function load_fastpnginfo(txt_output_el) {
-  if (ExifReader == null || exifr == null ) {
+  if (ExifReader == null) {
     let paths = gradioApp().querySelector("#fastpng_js_path");
     const scripts = paths.textContent.trim().split("\n");
     scripts.shift();
@@ -20,7 +19,6 @@ async function load_fastpnginfo(txt_output_el) {
     txt_output_el.appendChild(df);
 
     await import(`/file=${scripts[0]}`);
-    await import(`/file=${scripts[1]}`);
 
     fastpnginfo_loaded = true;
   }
@@ -28,25 +26,30 @@ async function load_fastpnginfo(txt_output_el) {
 
 fastpngprocess = function () {};
 
-function DecodeUserComment(asciiArray, encoding = "utf-8") {
+function DecodeUserComment(input) {
   let result = "";
 
-  if (asciiArray instanceof Uint8Array) {
-    const decoder = new TextDecoder(encoding);
-    result = decoder.decode(asciiArray);
-    
-  } else if (typeof asciiArray === "string") {
-    result = asciiArray;
+  if (typeof input === "number") {
+    input = [input];
   }
 
-  if (result.startsWith("UNICODE")) {
-    result = result.substring("UNICODE".length);
+  if (Array.isArray(input)) {
+    input = new Uint8Array(input);
+  }
+
+  if (input instanceof Uint8Array) {
+    const encoding = "utf-8";
+    const decoder = new TextDecoder(encoding);
+    result = decoder.decode(input);
+    
+  } else if (typeof input === "string") {
+    result = input;
   }
 
   result = result.replace(/[\x00-\x09\x0B-\x1F\x7F-\x9F]+/g, '').replace(/^[\x00-\x09\x0B-\x1F\x7F-\x9F]+|[\x00-\x09\x0B-\x1F\x7F-\x9F]+$/g, '');
-
   return result;
 }
+
 
 function round(value) {
   return Math.round(value * 10000) / 10000;
@@ -54,7 +57,7 @@ function round(value) {
 
 function convertNAI(input) {
   const re_attention = /\{|\[|\}|\]|[^\{\}\[\]]+/gmu;
-  let text = input.replaceAll("(", "\\(").replaceAll(")", "\\)").replace(/\\{2,}(\(|\))/gim,'\\$1');
+  let text = input.replaceAll("(", "\(").replaceAll(")", "\)").replace(/\\{2,}(\(|\))/gim,'\$1');
 
   let res = [];
 
@@ -132,33 +135,28 @@ onUiLoaded(function () {
   if (img_input_el == null || txt_output_el == null) return;
   
   async function fastpnginfo_process_image() {
-    try {
-      await load_fastpnginfo(txt_output_el);
+    await load_fastpnginfo(txt_output_el);
 
-      let event = new Event("input", { bubbles: true });
-      txt_output_el.dispatchEvent(event);
+    let event = new Event("input", { bubbles: true });
+    txt_output_el.dispatchEvent(event);
 
-      let img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
+    let img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
 
-      while (img_el == null) {
-        await new Promise((r) => setTimeout(r, 200));
-        img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
-      }
-
+    while (img_el == null) {
       await new Promise((r) => setTimeout(r, 100));
-    } catch (error) {
-      console.error("Error in fastpnginfo_process_image:", error);
-      throw error;
+      img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
     }
+
+    await new Promise((r) => setTimeout(r, 100));
   }
-  
+
   img_input_el.addEventListener("change", fastpnginfo_process_image);
   
   submit_el.addEventListener("click", async function (e) {
     if (!fastpnginfo_loaded) {
       await load_fastpnginfo(txt_output_el);
     }
-    
+                     
     let img_el = document.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
     
     try {
@@ -166,11 +164,10 @@ onUiLoaded(function () {
       let img_blob = await response.blob();
       let arrayBuffer = await img_blob.arrayBuffer();
       let tags = ExifReader.load(arrayBuffer);
-      let exif = await exifr?.parse(img_el, { userComment: true });
       txt_output_el.value = '';
 
       if (tags && tags.parameters) {
-        console.log("Parameters detected");
+        console.log("Parameters");
         
         txt_output_el.value = tags.parameters.description;
         let appEvent = new Event("input", { bubbles: true });
@@ -179,56 +176,51 @@ onUiLoaded(function () {
         return tags;
       }
       
-      if (exif && exif.userComment) {
-        console.log("UserComment detected");
-        
-        if (exif.userComment instanceof Uint8Array) {
-          var commentvalue = DecodeUserComment(exif.userComment);
-          
-          if (commentvalue) {
-            txt_output_el.value = commentvalue.trim();
-            let appEvent = new Event("input", { bubbles: true });
-            txt_output_el.dispatchEvent(appEvent);
-            return exif;
-          }
-          
-        } else {
-          console.error("invalid instance");
+      if (tags && tags.UserComment && tags.UserComment.value) {
+        console.log("UserComment");
+
+        const valueArray = tags.UserComment.value;
+
+        if (Array.isArray(valueArray)) {
+          const decodedValues = valueArray.map(number => {
+            return DecodeUserComment(number);
+          });
+
+          let output = decodedValues.join('').trim();
+          output = output.replace(/^UNICODE[\x00-\x20]*/, "");
+          txt_output_el.value = output;
+
+          let appEvent = new Event("input", { bubbles: true });
+          txt_output_el.dispatchEvent(appEvent);
+          return tags;
         }
       }
       
-      if (exif && exif.Software === "NovelAI") {
-        console.log("NovelAI detected");
-        
-        const nai = JSON.parse(exif.Comment);
-        nai.sampler = "Euler a";
-        txt_output_el.value =
-          convertNAI(exif.Description) +
-          "\nNegative prompt: " +
-          nai.uc +
-          "\nSteps: " +
-          nai.steps +
-          ", Sampler: " +
-          nai.sampler +
-          ", CFG scale: " +
-          nai.scale +
-          ", Seed: " +
-          nai.seed +
-          ", Size: " +
-          img_el.width +
-          "x" +
-          img_el.height +
-          ", Clip skip: 2, ENSD: 31337";
-        
+      if (tags && tags["Software"] && tags["Software"].description === "NovelAI"
+          && tags.Comment && tags.Comment.description) {
+        console.log("NovelAI");
+
+        const nai = JSON.parse(tags.Comment.description);
+        nai.sampler = "Euler";
+
+        txt_output_el.value = convertNAI(nai["prompt"])
+          + "\nNegative prompt: " + convertNAI(nai["uc"])
+          + "\nSteps: " + (nai["steps"])
+          + ", Sampler: " + (nai["sampler"])
+          + ", CFG scale: " + (nai["scale"])
+          + ", Seed: " + (nai["seed"])
+          + ", Size: " + img_el.width + "x" + img_el.height
+          + ", Clip skip: 2, ENSD: 31337";
+
         let appEvent = new Event("input", { bubbles: true });
         txt_output_el.dispatchEvent(appEvent);
-        return exif;
+        return tags;
       }
       
       txt_output_el.value = "Nothing to See Here";
       let appEvent = new Event("input", { bubbles: true });
       txt_output_el.dispatchEvent(appEvent);
-      return exif;
+      return tags;
       
     } finally {
       return app;

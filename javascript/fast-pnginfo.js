@@ -126,6 +126,7 @@ function convertNAI(input) {
 
 onUiLoaded(function () {
   const app = gradioApp();
+  
   if (!app || app === document) return;
 
   let img_input_el = app.querySelector("#fastpnginfo_image > div > div > input");
@@ -135,11 +136,6 @@ onUiLoaded(function () {
   if (img_input_el == null || txt_output_el == null) return;
   
   async function fastpnginfo_process_image() {
-    await load_fastpnginfo(txt_output_el);
-
-    let event = new Event("input", { bubbles: true });
-    txt_output_el.dispatchEvent(event);
-
     let img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
 
     while (img_el == null) {
@@ -153,75 +149,63 @@ onUiLoaded(function () {
   img_input_el.addEventListener("change", fastpnginfo_process_image);
   
   submit_el.addEventListener("click", async function (e) {
-    if (!fastpnginfo_loaded) {
-      await load_fastpnginfo(txt_output_el);
-    }
-                     
-    let img_el = document.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
-    
+    await load_fastpnginfo(txt_output_el);
+
+    let img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
+
     try {
       let response = await fetch(img_el.src);
       let img_blob = await response.blob();
       let arrayBuffer = await img_blob.arrayBuffer();
       let tags = ExifReader.load(arrayBuffer);
-      txt_output_el.value = '';
 
-      if (tags && tags.parameters) {
-        console.log("Parameters");
-        
-        txt_output_el.value = tags.parameters.description;
-        let appEvent = new Event("input", { bubbles: true });
-        txt_output_el.dispatchEvent(appEvent);
-        tags = new ArrayBuffer(0);
-        return tags;
-      }
-      
-      if (tags && tags.UserComment && tags.UserComment.value) {
-        console.log("UserComment");
+      if (tags) {
+        let output = "";
 
-        const valueArray = tags.UserComment.value;
+        if (tags.parameters) {
+          console.log("Parameters");
+          output = tags.parameters.description;
 
-        if (Array.isArray(valueArray)) {
-          const decodedValues = valueArray.map(number => {
-            return DecodeUserComment(number);
-          });
+        } else if (tags.UserComment && tags.UserComment.value) {
+          console.log("UserComment");
+          const valueArray = tags.UserComment.value;
 
-          let output = decodedValues.join('').trim();
-          output = output.replace(/^UNICODE[\x00-\x20]*/, "");
-          txt_output_el.value = output;
+          if (Array.isArray(valueArray)) {
+            const decodedValues = valueArray.map(number => {
+              return DecodeUserComment(number);
+            });
+            
+            output = decodedValues.join('').trim();
+            output = output.replace(/^UNICODE[\x00-\x20]*/, "");
+          }
 
-          let appEvent = new Event("input", { bubbles: true });
-          txt_output_el.dispatchEvent(appEvent);
-          return tags;
+        } else if (tags["Software"] && tags["Software"].description === "NovelAI"
+            && tags.Comment && tags.Comment.description) {
+          console.log("NovelAI");
+          
+          const nai = JSON.parse(tags.Comment.description);
+          nai.sampler = "Euler";
+
+          output = convertNAI(nai["prompt"])
+            + "\nNegative prompt: " + convertNAI(nai["uc"])
+            + "\nSteps: " + (nai["steps"])
+            + ", Sampler: " + (nai["sampler"])
+            + ", CFG scale: " + (parseFloat(nai["scale"]).toFixed(1))
+            + ", Seed: " + (nai["seed"])
+            + ", Size: " + (nai["width"]) + "x" + (nai["height"])
+            + ", Clip skip: 2, ENSD: 31337";
+
+        } else {
+          output = "Nothing To See Here";
         }
-      }
-      
-      if (tags && tags["Software"] && tags["Software"].description === "NovelAI"
-          && tags.Comment && tags.Comment.description) {
-        console.log("NovelAI");
 
-        const nai = JSON.parse(tags.Comment.description);
-        nai.sampler = "Euler";
-
-        txt_output_el.value = convertNAI(nai["prompt"])
-          + "\nNegative prompt: " + convertNAI(nai["uc"])
-          + "\nSteps: " + (nai["steps"])
-          + ", Sampler: " + (nai["sampler"])
-          + ", CFG scale: " + (nai["scale"])
-          + ", Seed: " + (nai["seed"])
-          + ", Size: " + img_el.width + "x" + img_el.height
-          + ", Clip skip: 2, ENSD: 31337";
-
+        txt_output_el.value = output;
         let appEvent = new Event("input", { bubbles: true });
         txt_output_el.dispatchEvent(appEvent);
-        return tags;
       }
-      
-      txt_output_el.value = "Nothing to See Here";
-      let appEvent = new Event("input", { bubbles: true });
-      txt_output_el.dispatchEvent(appEvent);
+
       return tags;
-      
+
     } finally {
       return app;
     }

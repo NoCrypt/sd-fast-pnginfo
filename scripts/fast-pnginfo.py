@@ -25,7 +25,7 @@ def on_ui_tabs():
     
     with gr.Blocks(analytics_enabled=False) as fast_pnginfo:
         gr.HTML(elem_id="fastpng_js_path", value='\n'.join(js_), visible=False)
-        submit = gr.Button(elem_id="fastpnginfo_submit", label="submit", interactive=True, visible=False)
+        gr.Button(elem_id="fastpnginfo_submit", label="submit", interactive=True, visible=False)
         geninfo = gr.Textbox(elem_id="fastpnginfo_geninfo", visible=False)
 
         with FormRow(equal_height=False):
@@ -80,4 +80,4 @@ def on_ui_tabs():
     return [(fast_pnginfo, "Fast PNG Info", "fast_pnginfo")]
 
 script_callbacks.on_ui_tabs(on_ui_tabs)
-print(f"\033[38;5;173m▶\033[0m Fast PNG Info")
+print("\033[38;5;208m▶\033[0m Fast PNG Info")

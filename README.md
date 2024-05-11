@@ -1,12 +1,27 @@
-# sd fast pnginfo
+# SD Fast PNG Info
+SD Fast PNG Info is an extension for <code>[Stable Diffusion WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui)</code><br>
+The extension uses a dynamically loaded <code>[ExifReader](https://github.com/mattiasw/ExifReader)</code> library module to extract image metadata locally.<br>
+Eliminating the need to upload it to a server, resulting in Fast PNG Info.<br>
+This is particularly noticeable when running the webui on online services, such as Google Colab, Kaggle, SageMaker Studio Lab, etc.<br>
 
-sd fast pnginfo is an extension for the [stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui). It allows you to view prompt from an image without the need to upload it to a server, resulting in fast pnginfo. This is particularly noticeable when running the webui in a public URL, such as colab.
+Support:
+- PNG parameters
+- JPEG and Avif userComment
+- Novel AI parameters with brackets conversion
 
-The extension utilizes the [exifr](https://mutiny.cz/exifr/) Javascript library, which is already packed within the extension and does not require an external CDN.
+# Changelog
+### 2024-05-08
+- Fixed handling of multi-byte (non-ASCII) characters in <code>userComment</code>.
 
-Please note that the extension is completed.
+### 2024-04-30
+- Displaying the output in HTML.
+
+### 2024-04-29
+- Migrating from [Exifr](https://github.com/MikeKovarik/exifr) to [ExifReader](https://github.com/mattiasw/ExifReader) JavaScript library.<br>
+- Fixed convertNAI function.
 
 <h1 align="center">Preview</h1>
 <p align="center">
-  <img src="https://github.com/gutris1/sd-fast-pnginfo/blob/e59a97f28d20397da5b78bdd6a8a79299cf139f1/preview.gif">
+  <img src="https://github.com/gutris1/sd-fast-pnginfo/assets/132797949/55e70a0b-35e7-40d3-8397-398941f36fd9" width="800">
+  <img src="https://github.com/gutris1/sd-fast-pnginfo/assets/132797949/02852cac-6517-42bb-ba4e-d54277bce894">
 </p>

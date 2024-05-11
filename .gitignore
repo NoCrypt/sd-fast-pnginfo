@@ -1,2 +1,4 @@
 __pycache__/
-preview.gif
+*.png
+*.gif
+*.jpg

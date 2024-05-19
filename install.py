@@ -1,25 +1,19 @@
-import shutil
-import urllib.request
+from urllib.request import urlopen
 from pathlib import Path
+import shutil
 
-_dir = Path(__file__).parent / "js"
-_lib = _dir / "exif-reader.js"
 
-def _delete():
-    for item in _dir.glob('*'):
-        if item != _dir:
-            if item.is_file():
-                item.unlink()
-            else:
-                shutil.rmtree(item)
+js_lib = Path(__file__).parent / "js"
+exif_reader = js_lib / "exif-reader.js"
 
-def _download():
-    if not _lib.exists():
-        _delete()
 
+def download_requirement():
+    if not exif_reader.exists():
+        js_lib.mkdir(parents=True, exist_ok=True)
         print(f"Downloading Fast PNG info requirement: \033[38;5;208mexif-reader.js\033[0m")
-        _url = "https://raw.githubusercontent.com/mattiasw/ExifReader/main/dist/exif-reader.js"
-        with urllib.request.urlopen(_url) as response, open(_lib, 'wb') as out_file:
+        url = "https://raw.githubusercontent.com/mattiasw/ExifReader/main/dist/exif-reader.js"
+        with urlopen(url) as response, open(exif_reader, 'wb') as out_file:
             shutil.copyfileobj(response, out_file)
 
-_download()
+
+download_requirement()

@@ -1,4 +1,3 @@
-
 function round(v) { return Math.round(v * 10000) / 10000 }
 
 function convertNAI(input) {
@@ -47,6 +46,7 @@ async function fastpnginfo_parse_image() {
 
     let tags = ExifReader.load(arrayBuffer);
     if (tags) {
+      const box = document.querySelector("#fastpnginfo_html");
 
       if (tags.parameters) {
         output = tags.parameters.description;
@@ -92,9 +92,11 @@ async function fastpnginfo_parse_image() {
 
       } else {
         output = null;
+        box.style.opacity = "0";
       }
 
       if (output) {
+        box.style.opacity = "1";
         const txt_output_el = gradioApp().querySelector("#fastpnginfo_geninfo  > label > textarea");
         txt_output_el.value = output;
         updateInput(txt_output_el);
@@ -110,22 +112,7 @@ async function fastpnginfo_parse_image() {
 }
 
 function fastpnginfo_plaintext_to_html(inputs) {
-  var box = document.querySelector("#fastpnginfo_html");
-
-  var pr = '<b style="display: block; margin-bottom: 4px;">Prompt</b>\n\n';
-  var np = `<br><b style="display: block; margin-top: 15px; margin-bottom: 4px;">Negative Prompt</b>`;
-  var st = `<b style="display: block; margin-top: 15px; margin-bottom: 4px;">Settings</b>`;
-
-  if (inputs === undefined || inputs === null || inputs.trim() === '') {
-    box.style.opacity = "0";
-
-  } else {
-    box.style.opacity = "1";
-    inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    inputs = inputs.replace(/\n/g, '<br>');
-    inputs = inputs.replace(/<br>Negative prompt:/, np);
-    inputs = inputs.replace(/Steps:/, match => st + match);
-  }
-
-  return `<div style="padding: 5px;">${pr}<p>${inputs}</p></div>`;
+  inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  inputs = inputs.replace(/\n/g, '<br>');
+  return `<div style="padding: 5px;">${inputs}</p></div>`;
 }

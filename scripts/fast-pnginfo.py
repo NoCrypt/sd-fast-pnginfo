@@ -5,6 +5,7 @@ from modules import extensions
 import gradio as gr
 import os
 
+
 def get_self_extension():
     if '__file__' in globals():
         filepath = __file__
@@ -14,6 +15,7 @@ def get_self_extension():
     for ext in extensions.active():
         if ext.path in filepath:
             return ext
+
 
 def on_ui_tabs():
     ext = get_self_extension()
@@ -79,5 +81,5 @@ def on_ui_tabs():
 
     return [(fast_pnginfo, "Fast PNG Info", "fast_pnginfo")]
 
+
 script_callbacks.on_ui_tabs(on_ui_tabs)
-print("\033[38;5;208m▶\033[0m Fast PNG Info")

@@ -120,15 +120,11 @@ function fastpnginfo_plaintext_to_html(inputs) {
     box.style.opacity = "0";
 
   } else {
-    if (inputs.includes("Nothing To See Here")) {
-      pr = '';
-    }
-
-      box.style.opacity = "1";
-      inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      inputs = inputs.replace(/\n/g, '<br>');
-      inputs = inputs.replace(/<br>Negative prompt:/, np);
-      inputs = inputs.replace(/Steps:/, match => st + match);
+    box.style.opacity = "1";
+    inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    inputs = inputs.replace(/\n/g, '<br>');
+    inputs = inputs.replace(/<br>Negative prompt:/, np);
+    inputs = inputs.replace(/Steps:/, match => st + match);
   }
 
   return `<div style="padding: 5px;">${pr}<p>${inputs}</p></div>`;

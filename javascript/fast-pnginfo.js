@@ -1,27 +1,3 @@
-fastpnginfo_loaded = false;
-ExifReader = null;
-
-async function load_fastpnginfo(txt_output_el) {
-  if (ExifReader == null) {
-    let paths = gradioApp().querySelector("#fastpng_js_path");
-    const scripts = paths.textContent.trim().split("\n");
-    scripts.shift();
-    const df = document.createDocumentFragment();
-
-    for (let src of scripts) {
-      const script = document.createElement("script");
-      script.async = true;
-      script.type = "module";
-      script.src = `file=${src}`;
-      df.appendChild(script);
-    }
-
-    txt_output_el.appendChild(df);
-    await import(`/file=${scripts[0]}`);
-    fastpnginfo_loaded = true;
-  }
-}
-
 fastpngprocess = function () {};
 
 function round(v) { return Math.round(v * 10000) / 10000 }
@@ -52,7 +28,7 @@ function convertNAI(input) {
       res.splice(i + 1, 1);
     } else i++;
   }
-  
+
   let result = "";
   for (let i = 0; i < res.length; i++) {
     if (res[i][1] == 1.0) result += res[i][0];
@@ -73,8 +49,6 @@ onUiLoaded(async function () {
 
   img_input_el.addEventListener("change", fastpnginfo_process_image);
 
-  await load_fastpnginfo(txt_output_el);
-
   submit_el.addEventListener("click", async function () {
     let img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
 
@@ -89,7 +63,7 @@ onUiLoaded(async function () {
 
         if (tags.parameters) {
           output = tags.parameters.description;
-          
+
         } else if (tags.UserComment && tags.UserComment.value) {
           const ray = tags.UserComment.value;
           const result = [];
@@ -112,9 +86,9 @@ onUiLoaded(async function () {
           const userComment = new TextDecoder("utf-16").decode(new Uint16Array(result));
           output = userComment.trim().replace(/^UNICODE[\x00-\x20]*/, "");
 
-        } else if (tags["Software"] && 
-                   tags["Software"].description === "NovelAI" && 
-                   tags.Comment && 
+        } else if (tags["Software"] &&
+                   tags["Software"].description === "NovelAI" &&
+                   tags.Comment &&
                    tags.Comment.description) {
 
           const nai = JSON.parse(tags.Comment.description);

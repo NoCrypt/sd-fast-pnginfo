@@ -129,3 +129,28 @@ onUiLoaded(async function () {
     await new Promise(r => setTimeout(r, 100));
   }
 });
+
+function fastpnginfo_plaintext_to_html(inputs) {
+  var box = document.querySelector("#fastpnginfo_html");
+
+  var pr = '<b style="display: block; margin-bottom: 4px;">Prompt</b>\\n\\n';
+  var np = `<br><b style="display: block; margin-top: 15px; margin-bottom: 4px;">Negative Prompt</b>`;
+  var st = `<b style="display: block; margin-top: 15px; margin-bottom: 4px;">Settings</b>`;
+
+  if (inputs === undefined || inputs === null || inputs.trim() === '') {
+    box.style.opacity = "0";
+
+  } else {
+    if (inputs.includes("Nothing To See Here")) {
+      pr = '';
+    }
+
+      box.style.opacity = "1";
+      inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      inputs = inputs.replace(/\\n/g, '<br>');
+      inputs = inputs.replace(/<br>Negative prompt:/, np);
+      inputs = inputs.replace(/Steps:/, match => st + match);
+  }
+
+  return `<div style="padding: 5px;">${pr}<p>${inputs}</p></div>`;
+}

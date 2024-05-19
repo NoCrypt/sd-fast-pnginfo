@@ -1,4 +1,3 @@
-fastpngprocess = function () {};
 
 function round(v) { return Math.round(v * 10000) / 10000 }
 
@@ -37,103 +36,83 @@ function convertNAI(input) {
   return result;
 }
 
-onUiLoaded(async function () {
-  const app = gradioApp();
-  if (!app || app === document) return;
+async function fastpnginfo_parse_image() {
+  let output = "";
 
-  const img_input_el = app.querySelector("#fastpnginfo_image > div > div > input");
-  const txt_output_el = app.querySelector("#fastpnginfo_geninfo  > label > textarea");
-  const submit_el = app.querySelector("#fastpnginfo_submit");
+  let img_el = gradioApp().querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
+  try {
+    let response = await fetch(img_el.src);
+    let img_blob = await response.blob();
+    let arrayBuffer = await img_blob.arrayBuffer();
 
-  if (!img_input_el || !txt_output_el) return;
+    let tags = ExifReader.load(arrayBuffer);
+    if (tags) {
 
-  img_input_el.addEventListener("change", fastpnginfo_process_image);
+      if (tags.parameters) {
+        output = tags.parameters.description;
 
-  submit_el.addEventListener("click", async function () {
-    let img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
+      } else if (tags.UserComment && tags.UserComment.value) {
+        const ray = tags.UserComment.value;
+        const result = [];
+        var ar = ray;
+        var pos = ar.indexOf(0) + 1;
 
-    try {
-      let response = await fetch(img_el.src);
-      let img_blob = await response.blob();
-      let arrayBuffer = await img_blob.arrayBuffer();
-      let tags = ExifReader.load(arrayBuffer);
+        for(var i = pos; i < ar.length; i += 2) {
+          var inDEX = ar[i];
+          var nEXT = ar[i + 1];
 
-      if (tags) {
-        let output = "";
-
-        if (tags.parameters) {
-          output = tags.parameters.description;
-
-        } else if (tags.UserComment && tags.UserComment.value) {
-          const ray = tags.UserComment.value;
-          const result = [];
-          var ar = ray;
-          var pos = ar.indexOf(0) + 1;
-
-          for(var i = pos; i < ar.length; i += 2) {
-            var inDEX = ar[i];
-            var nEXT = ar[i + 1];
-
-            if(inDEX === 0 && nEXT === 32) {
-              result.push(32);
-              continue;
-            }
-
-            let vaLUE = inDEX * 256 + nEXT;
-            result.push(vaLUE);
+          if(inDEX === 0 && nEXT === 32) {
+            result.push(32);
+            continue;
           }
 
-          const userComment = new TextDecoder("utf-16").decode(new Uint16Array(result));
-          output = userComment.trim().replace(/^UNICODE[\x00-\x20]*/, "");
-
-        } else if (tags["Software"] &&
-                   tags["Software"].description === "NovelAI" &&
-                   tags.Comment &&
-                   tags.Comment.description) {
-
-          const nai = JSON.parse(tags.Comment.description);
-          nai.sampler = "Euler";
-
-          output = convertNAI(nai["prompt"])
-            + "\nNegative prompt: " + convertNAI(nai["uc"])
-            + "\nSteps: " + (nai["steps"])
-            + ", Sampler: " + (nai["sampler"])
-            + ", CFG scale: " + (parseFloat(nai["scale"]).toFixed(1))
-            + ", Seed: " + (nai["seed"])
-            + ", Size: " + (nai["width"]) + "x" + (nai["height"])
-            + ", Clip skip: 2, ENSD: 31337";
-
-        } else {
-          output = "Nothing To See Here";
+          let vaLUE = inDEX * 256 + nEXT;
+          result.push(vaLUE);
         }
 
-        txt_output_el.value = output;
-        txt_output_el.dispatchEvent(new Event("input", { bubbles: true }));
+        const userComment = new TextDecoder("utf-16").decode(new Uint16Array(result));
+        output = userComment.trim().replace(/^UNICODE[\x00-\x20]*/, "");
+
+      } else if (tags["Software"] &&
+                 tags["Software"].description === "NovelAI" &&
+                 tags.Comment &&
+                 tags.Comment.description) {
+
+        const nai = JSON.parse(tags.Comment.description);
+        nai.sampler = "Euler";
+
+        output = convertNAI(nai["prompt"])
+          + "\nNegative prompt: " + convertNAI(nai["uc"])
+          + "\nSteps: " + (nai["steps"])
+          + ", Sampler: " + (nai["sampler"])
+          + ", CFG scale: " + (parseFloat(nai["scale"]).toFixed(1))
+          + ", Seed: " + (nai["seed"])
+          + ", Size: " + (nai["width"]) + "x" + (nai["height"])
+          + ", Clip skip: 2, ENSD: 31337";
+
+      } else {
+        output = null;
       }
 
-      return tags;
-
-    } finally {
-      return app;
+      if (output) {
+        const txt_output_el = gradioApp().querySelector("#fastpnginfo_geninfo  > label > textarea");
+        txt_output_el.value = output;
+        updateInput(txt_output_el);
+        const fastpnginfo_geninfo_html = gradioApp().querySelector("#fastpnginfo_geninfo_html");
+        output = fastpnginfo_plaintext_to_html(output)
+        fastpnginfo_geninfo_html.classList.add('prose');
+        fastpnginfo_geninfo_html.innerHTML = output;
+      }
     }
-  });
+  }finally {
 
-  async function fastpnginfo_process_image() {
-    let img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
-
-    while (!img_el) {
-      await new Promise(r => setTimeout(r, 100));
-      img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
-    }
-
-    await new Promise(r => setTimeout(r, 100));
   }
-});
+}
 
 function fastpnginfo_plaintext_to_html(inputs) {
   var box = document.querySelector("#fastpnginfo_html");
 
-  var pr = '<b style="display: block; margin-bottom: 4px;">Prompt</b>\\n\\n';
+  var pr = '<b style="display: block; margin-bottom: 4px;">Prompt</b>\n\n';
   var np = `<br><b style="display: block; margin-top: 15px; margin-bottom: 4px;">Negative Prompt</b>`;
   var st = `<b style="display: block; margin-top: 15px; margin-bottom: 4px;">Settings</b>`;
 
@@ -147,7 +126,7 @@ function fastpnginfo_plaintext_to_html(inputs) {
 
       box.style.opacity = "1";
       inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      inputs = inputs.replace(/\\n/g, '<br>');
+      inputs = inputs.replace(/\n/g, '<br>');
       inputs = inputs.replace(/<br>Negative prompt:/, np);
       inputs = inputs.replace(/Steps:/, match => st + match);
   }

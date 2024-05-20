@@ -24,7 +24,7 @@ def on_ui_tabs():
                 parameters_copypaste.register_paste_params_button(parameters_copypaste.ParamBinding(
                     paste_button=button, tabname=tabname, source_text_component=geninfo, source_image_component=image))
 
-        image.change(fn=None, inputs=[], outputs=[], _js="() => {fastpnginfo_parse_image();}")
+        image.change(fn=None, _js='fastpnginfo_parse_image')
 
     return [(fast_pnginfo, "Fast PNG Info", "fast_pnginfo")]
 

@@ -1,12 +1,10 @@
-function round(v) { return Math.round(v * 10000) / 10000 }
-
 function convertNAI(input) {
   const re_attention = /\{|\[|\}|\]|[^\{\}\[\]]+/gmu;
   let text = input.replaceAll("(", "\(").replaceAll(")", "\)").replace(/\\{2,}(\(|\))/gim, '\$1');
   let res = [], curly_brackets = [], square_brackets = [];
   const curly_bracket_multiplier = 1.05, square_bracket_multiplier = 1 / 1.05;
   function multiply_range(start, multiplier) {
-    for (let pos = start; pos < res.length; pos++) res[pos][1] = round(res[pos][1] * multiplier);
+    for (let pos = start; pos < res.length; pos++) res[pos][1] = Math.round(res[pos][1] * multiplier * 10000) / 10000;
   }
   for (const match of text.matchAll(re_attention)) {
     let word = match[0];

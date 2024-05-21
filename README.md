@@ -10,6 +10,11 @@ Support:
 - Novel AI parameters with brackets conversion
 
 # Changelog
+### 2024-05-21
+- HTML display removed.
+- it was unnecessary.
+- code simplified.
+
 ### 2024-05-08
 - Fixed handling of multi-byte (non-ASCII) characters in <code>userComment</code>.
 
@@ -22,6 +27,5 @@ Support:
 
 <h1 align="center">Preview</h1>
 <p align="center">
-  <img src="https://github.com/gutris1/sd-fast-pnginfo/assets/132797949/55e70a0b-35e7-40d3-8397-398941f36fd9" width="800">
   <img src="https://github.com/gutris1/sd-fast-pnginfo/assets/132797949/02852cac-6517-42bb-ba4e-d54277bce894">
 </p>

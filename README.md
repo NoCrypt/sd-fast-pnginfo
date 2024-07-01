@@ -11,26 +11,34 @@ Support:
 - Novel AI parameters with brackets conversion
 
 # Changelog
-### 2024-06-21
-- Restored HTML display for better readability and visual comfort.
+<details><summary>2024-06-21</summary><br>
 
-### 2024-05-21
+- Restored HTML display for better readability and visual comfort.
+</details>
+<details><summary>2024-05-21</summary><br>
+
 - HTML display removed.
 - it was unnecessary.
 - code simplified.
+</details>
+<details><summary>2024-05-08</summary><br>
 
-### 2024-05-08
 - Fixed handling of multi-byte (non-ASCII) characters in <code>userComment</code>.
+</details>
+<details><summary>2024-04-30</summary><br>
 
-### 2024-04-30
 - Displaying the output in HTML.
+</details>
+<details><summary>2024-04-29</summary><br>
 
-### 2024-04-29
 - Migrating from [Exifr](https://github.com/MikeKovarik/exifr) to [ExifReader](https://github.com/mattiasw/ExifReader) JavaScript library.<br>
 - Fixed convertNAI function.
+</details>
 
-<h1 align="center">Preview</h1>
+# Preview
+
 <p align="center">
-  <img src="https://github.com/gutris1/sd-fast-pnginfo/assets/132797949/55e70a0b-35e7-40d3-8397-398941f36fd9" width="800">
-  <img src="https://github.com/gutris1/sd-fast-pnginfo/assets/132797949/562eb02e-5ff5-4353-bc88-2f2196a3f6d1" width="800">
+  <img src="https://github.com/gutris1/segsmaker/blob/main/pre/fastpnginfo.png", widht=1000px>
+  <img src="https://github.com/gutris1/sd-fast-pnginfo/assets/132797949/55e70a0b-35e7-40d3-8397-398941f36fd9", widht=1000px>
 </p>
+

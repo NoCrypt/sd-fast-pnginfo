@@ -1,4 +1,5 @@
 __pycache__/
 *.png
 *.gif
+*.jpg
 javascript/exif-reader.js

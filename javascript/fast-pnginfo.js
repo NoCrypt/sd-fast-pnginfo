@@ -1,99 +1,84 @@
-fastPNGProcess = function () {
-  document.querySelector("#fastpnginfo_submit").click();
-  document.querySelector("#fastpnginfo_geninfo").style.visibility = "visible";
-};
+async function fastpnginfo_parse_image() {
+  window.EnCrypt = '';
+  window.EPwdSha = '';
+  window.SfwNAI = '';
+  window.SrcNAI = '';
 
-onUiLoaded(async function () {
-  const app = gradioApp();
-  if (!app || app === document) return;
+  const txt_output_el = gradioApp().querySelector("#fastpnginfo_geninfo  > label > textarea");
+  const fastpnginfoHTML = gradioApp().querySelector("#fastpnginfo_html");
 
-  const img_input_el = app.querySelector("#fastpnginfo_image > div > div > input");
-  const txt_output_el = app.querySelector("#fastpnginfo_geninfo  > label > textarea");
-  const submit_el = app.querySelector("#fastpnginfo_submit");
+  let img_el = gradioApp().querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
+  if (!img_el) {
+    fastpnginfoHTML.innerHTML = plainTextToHTML('');
+    return;
+  }
 
-  if (!img_input_el || !txt_output_el) return;
+  let response = await fetch(img_el.src);
+  let img_blob = await response.blob();
+  let arrayBuffer = await img_blob.arrayBuffer();
+  let tags = ExifReader.load(arrayBuffer);
+  let output = "";
 
-  img_input_el.addEventListener("change", fastpnginfo_process_image);
+  if (tags) {
+    window.EnCrypt = tags.Encrypt ? tags.Encrypt.description : '';
+    window.EPwdSha = tags.EncryptPwdSha ? tags.EncryptPwdSha.description : '';
 
-  submit_el.addEventListener("click", async function () {
-    let img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
-    try {
-      let response = await fetch(img_el.src);
-      let img_blob = await response.blob();
-      let arrayBuffer = await img_blob.arrayBuffer();
-      let tags = ExifReader.load(arrayBuffer);
+    if (tags.parameters) {
+      output = tags.parameters.description;
 
-      if (tags) {
-        let output = "";
+    } else if (tags.UserComment && tags.UserComment.value) {
+      const ray = tags.UserComment.value;
+      const result = [];
+      var ar = ray;
+      var pos = ar.indexOf(0) + 1;
 
-        if (tags.parameters) {
-          output = tags.parameters.description;
-          
-        } else if (tags.UserComment && tags.UserComment.value) {
-          const ray = tags.UserComment.value;
-          const result = [];
-          var ar = ray;
-          var pos = ar.indexOf(0) + 1;
+      for(var i = pos; i < ar.length; i += 2) {
+        var inDEX = ar[i];
+        var nEXT = ar[i + 1];
 
-          for(var i = pos; i < ar.length; i += 2) {
-            var inDEX = ar[i];
-            var nEXT = ar[i + 1];
-
-            if(inDEX === 0 && nEXT === 32) {
-              result.push(32);
-              continue;
-            }
-
-            let vaLUE = inDEX * 256 + nEXT;
-            result.push(vaLUE);
-          }
-
-          const userComment = new TextDecoder("utf-16").decode(new Uint16Array(result));
-          output = userComment.trim().replace(/^UNICODE[\x00-\x20]*/, "");
-
-        } else if (tags["Software"] && 
-                   tags["Software"].description === "NovelAI" && 
-                   tags.Comment && 
-                   tags.Comment.description) {
-
-          const nai = JSON.parse(tags.Comment.description);
-          nai.sampler = "Euler";
-
-          output = convertNAI(nai["prompt"])
-            + "\nNegative prompt: " + convertNAI(nai["uc"])
-            + "\nSteps: " + (nai["steps"])
-            + ", Sampler: " + (nai["sampler"])
-            + ", CFG scale: " + (parseFloat(nai["scale"]).toFixed(1))
-            + ", Seed: " + (nai["seed"])
-            + ", Size: " + (nai["width"]) + "x" + (nai["height"])
-            + ", Clip skip: 2, ENSD: 31337";
-
-        } else {
-          output = "Nothing To See Here";
+        if(inDEX === 0 && nEXT === 32) {
+          result.push(32);
+          continue;
         }
 
-        txt_output_el.value = output;
-        txt_output_el.dispatchEvent(new Event("input", { bubbles: true }));
+        let vaLUE = inDEX * 256 + nEXT;
+        result.push(vaLUE);
       }
 
-      return tags;
+      const userComment = new TextDecoder("utf-16").decode(new Uint16Array(result));
+      output = userComment.trim().replace(/^UNICODE[\x00-\x20]*/, "");
 
-    } finally {
-      return app;
+    } else if (tags["Software"] && tags["Software"].description === "NovelAI" &&
+               tags.Comment && tags.Comment.description) {
+
+      window.SfwNAI = tags["Software"] ? tags["Software"].description : '';
+      window.SrcNAI = tags["Source"] ? tags["Source"].description : '';
+
+      const nai = JSON.parse(tags.Comment.description);
+      nai.sampler = "Euler";
+
+      output = convertNAI(nai["prompt"])
+        + "\nNegative prompt: " + convertNAI(nai["uc"])
+        + "\nSteps: " + (nai["steps"])
+        + ", Sampler: " + (nai["sampler"])
+        + ", CFG scale: " + (parseFloat(nai["scale"]).toFixed(1))
+        + ", Seed: " + (nai["seed"])
+        + ", Size: " + (nai["width"]) + "x" + (nai["height"])
+        + ", Clip skip: 2, ENSD: 31337";
+
+    } else {
+      output = "Nothing To See Here";
     }
-  });
 
-  async function fastpnginfo_process_image() {
-    let img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
-
-    while (!img_el) {
-      await new Promise(r => setTimeout(r, 100));
-      img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
+    if (output) {
+      txt_output_el.value = output;
+      updateInput(txt_output_el);
+      fastpnginfoHTML.classList.add('prose');
+      fastpnginfoHTML.innerHTML = plainTextToHTML(output);
     }
-
-    await new Promise(r => setTimeout(r, 100));
   }
-});
+  return tags;
+}
 
 function round(v) { return Math.round(v * 10000) / 10000 }
 
@@ -133,24 +118,53 @@ function convertNAI(input) {
 }
 
 function plainTextToHTML(inputs) {
+  const EnCrypt = window.EnCrypt;
+  const EPwdSha = window.EPwdSha;
+  const SfwNAI = window.SfwNAI;
+  const SrcNAI = window.SrcNAI;
+
   var box = document.querySelector("#fastpnginfo_panel");
-  var pr = `<b style="display: block; margin-bottom: 4px;">Prompt</b>`;
-  var np = `<b style="display: block; margin-top: 15px; margin-bottom: 4px;">Negative Prompt</b>`;
-  var pm = `<b style="display: block; margin-top: 15px; margin-bottom: 4px;">Params</b>`;
+  var sty = "display: block; margin-bottom: 2px;";
+  var mTop = "margin-top: 16px;";
+
+  var pro = `<b style="${sty}">Prompt</b>`;
+  var neg = `<b style="${sty} ${mTop}">Negative Prompt</b>`;
+  var prm = `<b style="${sty} ${mTop}">Params</b>`;
+  var ciH = `<b style="${sty} ${mTop}">Civitai Hashes</b>`;
+
+  var eNC = `<b style="${sty} ${mTop}">Encrypt</b>`;
+  var pWD = `<b style="${sty} ${mTop}">EncryptPwdSha</b>`;
+  
+  var sFW = `<b style="${sty} ${mTop}">Software</b>`;
+  var sRC = `<b style="${sty} ${mTop}">Source</b>`;
+
   var br = /\n/g;
 
   if (inputs === undefined || inputs === null || inputs.trim() === '') {
     box.style.opacity = '0';
-
   } else {
     if (inputs.includes("Nothing To See Here")) {
-      pr = '';
+      pro = '';
     }
 
     box.style.opacity = '1';
     inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(br, '<br>');
-    inputs = inputs.replace(/Negative prompt:/, np).replace(/Steps:/, match => pm + match);                                
+    inputs = inputs.replace(/Negative prompt:/, neg).replace(/Steps:/, match => prm + match);
+    inputs = inputs.replace(/, Hashes:/, ciH);
+
+    if (EnCrypt && EnCrypt.trim() !== '') {
+      inputs += `<br>${eNC}${EnCrypt}`;
+    }
+    if (EPwdSha && EPwdSha.trim() !== '') {
+      inputs += `<br>${pWD}${EPwdSha}`;
+    }
+    if (SfwNAI && SfwNAI.trim() !== '') {
+      inputs += `<br>${sFW}${SfwNAI}`;
+    }
+    if (SrcNAI && SrcNAI.trim() !== '') {
+      inputs += `<br>${sRC}${SrcNAI}`;
+    }    
   }
 
-  return `<div style="padding: 5px;">${pr}<p>${inputs}</p></div>`;
+  return `<div class="fastpnginfo_cont"style="padding: 2px; margin-bottom: -10px;">${pro}<p>${inputs}</p></div>`;
 }

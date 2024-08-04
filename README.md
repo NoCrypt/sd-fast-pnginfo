@@ -10,35 +10,9 @@ Support:
 - JPEG and Avif userComment
 - Novel AI parameters with brackets conversion
 
-# Changelog
-<details><summary>2024-06-21</summary><br>
-
-- Restored HTML display for better readability and visual comfort.
-</details>
-<details><summary>2024-05-21</summary><br>
-
-- HTML display removed.
-- it was unnecessary.
-- code simplified.
-</details>
-<details><summary>2024-05-08</summary><br>
-
-- Fixed handling of multi-byte (non-ASCII) characters in <code>userComment</code>.
-</details>
-<details><summary>2024-04-30</summary><br>
-
-- Displaying the output in HTML.
-</details>
-<details><summary>2024-04-29</summary><br>
-
-- Migrating from [Exifr](https://github.com/MikeKovarik/exifr) to [ExifReader](https://github.com/mattiasw/ExifReader) JavaScript library.<br>
-- Fixed convertNAI function.
-</details>
-
 # Preview
 
 <p align="center">
   <img src="https://github.com/gutris1/segsmaker/blob/main/pre/fastpnginfo.png", widht=1000px>
-  <img src="https://github.com/gutris1/sd-fast-pnginfo/assets/132797949/55e70a0b-35e7-40d3-8397-398941f36fd9", widht=1000px>
+  <img src="https://github.com/user-attachments/assets/246f2346-f240-4a32-84d0-ea17a63966a8", widht=1000px>
 </p>
-

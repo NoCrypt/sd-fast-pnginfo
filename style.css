@@ -1,1 +1,7 @@
-#fastpnginfo_html {opacity: 0}
+#fastpnginfo_panel {opacity: 0}
+
+.fastpnginfo_cont {
+  overflow-wrap: break-word;
+  max-width: 100%;
+  overflow-x: auto;
+}

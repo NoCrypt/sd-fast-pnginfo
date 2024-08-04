@@ -1,28 +1,84 @@
-fastpnginfo_loaded = false;
-ExifReader = null;
+async function fastpnginfo_parse_image() {
+  window.EnCrypt = '';
+  window.EPwdSha = '';
+  window.SfwNAI = '';
+  window.SrcNAI = '';
 
-async function load_fastpnginfo(txt_output_el) {
-  if (ExifReader == null) {
-    let paths = gradioApp().querySelector("#fastpng_js_path");
-    const scripts = paths.textContent.trim().split("\n");
-    scripts.shift();
-    const df = document.createDocumentFragment();
+  const txt_output_el = gradioApp().querySelector("#fastpnginfo_geninfo  > label > textarea");
+  const fastpnginfoHTML = gradioApp().querySelector("#fastpnginfo_html");
 
-    for (let src of scripts) {
-      const script = document.createElement("script");
-      script.async = true;
-      script.type = "module";
-      script.src = `file=${src}`;
-      df.appendChild(script);
+  let img_el = gradioApp().querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
+  if (!img_el) {
+    fastpnginfoHTML.innerHTML = plainTextToHTML('');
+    return;
+  }
+
+  let response = await fetch(img_el.src);
+  let img_blob = await response.blob();
+  let arrayBuffer = await img_blob.arrayBuffer();
+  let tags = ExifReader.load(arrayBuffer);
+  let output = "";
+
+  if (tags) {
+    window.EnCrypt = tags.Encrypt ? tags.Encrypt.description : '';
+    window.EPwdSha = tags.EncryptPwdSha ? tags.EncryptPwdSha.description : '';
+
+    if (tags.parameters) {
+      output = tags.parameters.description;
+
+    } else if (tags.UserComment && tags.UserComment.value) {
+      const ray = tags.UserComment.value;
+      const result = [];
+      var ar = ray;
+      var pos = ar.indexOf(0) + 1;
+
+      for(var i = pos; i < ar.length; i += 2) {
+        var inDEX = ar[i];
+        var nEXT = ar[i + 1];
+
+        if(inDEX === 0 && nEXT === 32) {
+          result.push(32);
+          continue;
+        }
+
+        let vaLUE = inDEX * 256 + nEXT;
+        result.push(vaLUE);
+      }
+
+      const userComment = new TextDecoder("utf-16").decode(new Uint16Array(result));
+      output = userComment.trim().replace(/^UNICODE[\x00-\x20]*/, "");
+
+    } else if (tags["Software"] && tags["Software"].description === "NovelAI" &&
+               tags.Comment && tags.Comment.description) {
+
+      window.SfwNAI = tags["Software"] ? tags["Software"].description : '';
+      window.SrcNAI = tags["Source"] ? tags["Source"].description : '';
+
+      const nai = JSON.parse(tags.Comment.description);
+      nai.sampler = "Euler";
+
+      output = convertNAI(nai["prompt"])
+        + "\nNegative prompt: " + convertNAI(nai["uc"])
+        + "\nSteps: " + (nai["steps"])
+        + ", Sampler: " + (nai["sampler"])
+        + ", CFG scale: " + (parseFloat(nai["scale"]).toFixed(1))
+        + ", Seed: " + (nai["seed"])
+        + ", Size: " + (nai["width"]) + "x" + (nai["height"])
+        + ", Clip skip: 2, ENSD: 31337";
+
+    } else {
+      output = "Nothing To See Here";
     }
 
-    txt_output_el.appendChild(df);
-    await import(`/file=${scripts[0]}`);
-    fastpnginfo_loaded = true;
+    if (output) {
+      txt_output_el.value = output;
+      updateInput(txt_output_el);
+      fastpnginfoHTML.classList.add('prose');
+      fastpnginfoHTML.innerHTML = plainTextToHTML(output);
+    }
   }
+  return tags;
 }
-
-fastpngprocess = function () {};
 
 function round(v) { return Math.round(v * 10000) / 10000 }
 
@@ -61,97 +117,54 @@ function convertNAI(input) {
   return result;
 }
 
-onUiLoaded(async function () {
-  const app = gradioApp();
-  if (!app || app === document) return;
+function plainTextToHTML(inputs) {
+  const EnCrypt = window.EnCrypt;
+  const EPwdSha = window.EPwdSha;
+  const SfwNAI = window.SfwNAI;
+  const SrcNAI = window.SrcNAI;
 
-  const img_input_el = app.querySelector("#fastpnginfo_image > div > div > input");
-  const txt_output_el = app.querySelector("#fastpnginfo_geninfo  > label > textarea");
-  const submit_el = app.querySelector("#fastpnginfo_submit");
+  var box = document.querySelector("#fastpnginfo_panel");
+  var sty = "display: block; margin-bottom: 2px;";
+  var mTop = "margin-top: 16px;";
 
-  if (!img_input_el || !txt_output_el) return;
+  var pro = `<b style="${sty}">Prompt</b>`;
+  var neg = `<b style="${sty} ${mTop}">Negative Prompt</b>`;
+  var prm = `<b style="${sty} ${mTop}">Params</b>`;
+  var ciH = `<b style="${sty} ${mTop}">Civitai Hashes</b>`;
 
-  img_input_el.addEventListener("change", fastpnginfo_process_image);
+  var eNC = `<b style="${sty} ${mTop}">Encrypt</b>`;
+  var pWD = `<b style="${sty} ${mTop}">EncryptPwdSha</b>`;
+  
+  var sFW = `<b style="${sty} ${mTop}">Software</b>`;
+  var sRC = `<b style="${sty} ${mTop}">Source</b>`;
 
-  await load_fastpnginfo(txt_output_el);
+  var br = /\n/g;
 
-  submit_el.addEventListener("click", async function () {
-    let img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
-
-    try {
-      let response = await fetch(img_el.src);
-      let img_blob = await response.blob();
-      let arrayBuffer = await img_blob.arrayBuffer();
-      let tags = ExifReader.load(arrayBuffer);
-
-      if (tags) {
-        let output = "";
-
-        if (tags.parameters) {
-          output = tags.parameters.description;
-          
-        } else if (tags.UserComment && tags.UserComment.value) {
-          const ray = tags.UserComment.value;
-          const result = [];
-          var ar = ray;
-          var pos = ar.indexOf(0) + 1;
-
-          for(var i = pos; i < ar.length; i += 2) {
-            var inDEX = ar[i];
-            var nEXT = ar[i + 1];
-
-            if(inDEX === 0 && nEXT === 32) {
-              result.push(32);
-              continue;
-            }
-
-            let vaLUE = inDEX * 256 + nEXT;
-            result.push(vaLUE);
-          }
-
-          const userComment = new TextDecoder("utf-16").decode(new Uint16Array(result));
-          output = userComment.trim().replace(/^UNICODE[\x00-\x20]*/, "");
-
-        } else if (tags["Software"] && 
-                   tags["Software"].description === "NovelAI" && 
-                   tags.Comment && 
-                   tags.Comment.description) {
-
-          const nai = JSON.parse(tags.Comment.description);
-          nai.sampler = "Euler";
-
-          output = convertNAI(nai["prompt"])
-            + "\nNegative prompt: " + convertNAI(nai["uc"])
-            + "\nSteps: " + (nai["steps"])
-            + ", Sampler: " + (nai["sampler"])
-            + ", CFG scale: " + (parseFloat(nai["scale"]).toFixed(1))
-            + ", Seed: " + (nai["seed"])
-            + ", Size: " + (nai["width"]) + "x" + (nai["height"])
-            + ", Clip skip: 2, ENSD: 31337";
-
-        } else {
-          output = "Nothing To See Here";
-        }
-
-        txt_output_el.value = output;
-        txt_output_el.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-
-      return tags;
-
-    } finally {
-      return app;
-    }
-  });
-
-  async function fastpnginfo_process_image() {
-    let img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
-
-    while (!img_el) {
-      await new Promise(r => setTimeout(r, 100));
-      img_el = app.querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
+  if (inputs === undefined || inputs === null || inputs.trim() === '') {
+    box.style.opacity = '0';
+  } else {
+    if (inputs.includes("Nothing To See Here")) {
+      pro = '';
     }
 
-    await new Promise(r => setTimeout(r, 100));
+    box.style.opacity = '1';
+    inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(br, '<br>');
+    inputs = inputs.replace(/Negative prompt:/, neg).replace(/Steps:/, match => prm + match);
+    inputs = inputs.replace(/, Hashes:/, ciH);
+
+    if (EnCrypt && EnCrypt.trim() !== '') {
+      inputs += `<br>${eNC}${EnCrypt}`;
+    }
+    if (EPwdSha && EPwdSha.trim() !== '') {
+      inputs += `<br>${pWD}${EPwdSha}`;
+    }
+    if (SfwNAI && SfwNAI.trim() !== '') {
+      inputs += `<br>${sFW}${SfwNAI}`;
+    }
+    if (SrcNAI && SrcNAI.trim() !== '') {
+      inputs += `<br>${sRC}${SrcNAI}`;
+    }    
   }
-});
+
+  return `<div class="fastpnginfo_cont"style="padding: 2px; margin-bottom: -10px;">${pro}<p>${inputs}</p></div>`;
+}

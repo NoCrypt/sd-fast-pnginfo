@@ -72,6 +72,7 @@ async function fastpnginfo_parse_image() {
 
     if (output) {
       txt_output_el.value = output;
+      updateInput(txt_output_el);
       fastpnginfoHTML.classList.add('prose');
       fastpnginfoHTML.innerHTML = plainTextToHTML(output);
     }

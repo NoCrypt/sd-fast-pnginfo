@@ -13,7 +13,7 @@ def on_ui_tabs():
                     buttons = tempe.create_buttons(["txt2img", "img2img", "inpaint", "extras"])
 
             with gr.Column(variant="panel", scale=2, elem_id="fastpnginfo_panel"):
-                geninfo = gr.TextArea(elem_id="fastpnginfo_geninfo", label="RAW", visible=False)
+                geninfo = gr.Textbox(elem_id="fastpnginfo_geninfo", label="RAW", visible=False)
                 gr.HTML(elem_id="fastpnginfo_html")
 
             for tabname, button in buttons.items():

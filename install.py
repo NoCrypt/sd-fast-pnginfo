@@ -1,4 +1,5 @@
-import shutil, urllib.request
+import shutil
+import urllib.request
 from pathlib import Path
 
 req = (Path(__file__).parent / "javascript") / "exif-reader.js"

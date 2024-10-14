@@ -4,17 +4,53 @@ async function fastpnginfo_parse_image() {
   window.SfwNAI = '';
   window.SrcNAI = '';
 
-  const txt_output_el = gradioApp().querySelector("#fastpnginfo_geninfo  > label > textarea");
+  const txt_output_el = gradioApp().querySelector("#fastpnginfo_geninfo > label > textarea");
   const fastpnginfoHTML = gradioApp().querySelector("#fastpnginfo_html");
+  const imageContainer = document.getElementById("fastpnginfo_image");
 
   let img_el = gradioApp().querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
-  if (!img_el) {
+
+  if (img_el) {
+    img_el.style.width = "auto";
+    img_el.style.height = "auto";
+    img_el.style.objectFit = "contain";
+
+    img_el.onload = function() {
+      const imgAspectRatio = img_el.naturalWidth / img_el.naturalHeight;
+      const containerWidth = imageContainer.clientWidth; 
+      const newHeight = containerWidth / imgAspectRatio;
+      const fullSizeHeight = getComputedStyle(imageContainer).getPropertyValue('var(--size-full)').trim();
+      const fullSizeHeightValue = parseFloat(fullSizeHeight);
+
+      if (newHeight > fullSizeHeightValue) {
+        imageContainer.style.height = `${newHeight}px`;
+      } else {
+        imageContainer.style.height = fullSizeHeight;
+      }
+    };
+  } else {
+    const fullSizeHeight = getComputedStyle(imageContainer).getPropertyValue('var(--size-full)').trim();
+    imageContainer.style.height = fullSizeHeight;
     fastpnginfoHTML.innerHTML = plainTextToHTML('');
     return;
   }
 
   let response = await fetch(img_el.src);
   let img_blob = await response.blob();
+  let blobUrl = URL.createObjectURL(img_blob);
+  img_el.src = blobUrl;
+
+  const openInNewTab = document.createElement('a');
+  openInNewTab.href = blobUrl;
+  openInNewTab.target = '_blank';
+  openInNewTab.textContent = 'Open Image in New Tab';
+
+  openInNewTab.addEventListener('click', () => {
+    setTimeout(() => {
+      URL.revokeObjectURL(blobUrl);
+    }, 1000);
+  });
+
   let arrayBuffer = await img_blob.arrayBuffer();
   let tags = ExifReader.load(arrayBuffer);
   let output = "";
@@ -32,11 +68,11 @@ async function fastpnginfo_parse_image() {
       var ar = ray;
       var pos = ar.indexOf(0) + 1;
 
-      for(var i = pos; i < ar.length; i += 2) {
+      for (var i = pos; i < ar.length; i += 2) {
         var inDEX = ar[i];
         var nEXT = ar[i + 1];
 
-        if(inDEX === 0 && nEXT === 32) {
+        if (inDEX === 0 && nEXT === 32) {
           result.push(32);
           continue;
         }
@@ -124,30 +160,63 @@ function plainTextToHTML(inputs) {
   const SrcNAI = window.SrcNAI;
 
   var box = document.querySelector("#fastpnginfo_panel");
-  var sty = "display: block; margin-bottom: 2px;";
+  var sty = "display: block; margin-bottom: 2px; color: var(--button-secondary-text-color);";
   var mTop = "margin-top: 16px;";
 
-  var pro = `<b style="${sty}">Prompt</b>`;
-  var neg = `<b style="${sty} ${mTop}">Negative Prompt</b>`;
-  var prm = `<b style="${sty} ${mTop}">Params</b>`;
-  var ciH = `<b style="${sty} ${mTop}">Civitai Hashes</b>`;
+  var bS = `
+    color: var(--button-secondary-text-color);
+    font-size: 15px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: -5px;
+    margin-bottom: 2px;
+    display: block;
+    background-color: transparent;
+    cursor: pointer;`;
 
+  var pro = `
+    <button id="promptButton"
+    class="fastpnginfo_button"
+    style="${bS}; 
+    margin-top: 2px; 
+    margin-bottom: 2px;">
+    Prompt</button>`;
+
+  var neg = `
+    <button id="negativePromptButton"
+    class="fastpnginfo_button"
+    style="${bS} 
+    ${mTop}">
+    Negative Prompt</button>`;
+
+  var prm = `
+    <button id="paramsButton"
+    class="fastpnginfo_button"
+    style="${bS} 
+    ${mTop}">
+    Params</button>`;
+
+  var ciH = `<b style="${sty} ${mTop}">Civitai Hashes</b>`;
   var eNC = `<b style="${sty} ${mTop}">Encrypt</b>`;
   var pWD = `<b style="${sty} ${mTop}">EncryptPwdSha</b>`;
-  
   var sFW = `<b style="${sty} ${mTop}">Software</b>`;
   var sRC = `<b style="${sty} ${mTop}">Source</b>`;
 
   var br = /\n/g;
-
+  
   if (inputs === undefined || inputs === null || inputs.trim() === '') {
+    box.style.transition = 'none';
     box.style.opacity = '0';
+    box.classList.remove('show');
   } else {
     if (inputs.includes("Nothing To See Here")) {
       pro = '';
     }
 
+    box.classList.add('show');
+    box.style.transition = '';
     box.style.opacity = '1';
+
     inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(br, '<br>');
     inputs = inputs.replace(/Negative prompt:/, neg).replace(/Steps:/, match => prm + match);
     inputs = inputs.replace(/, Hashes:/, ciH);
@@ -163,8 +232,103 @@ function plainTextToHTML(inputs) {
     }
     if (SrcNAI && SrcNAI.trim() !== '') {
       inputs += `<br>${sRC}${SrcNAI}`;
-    }    
+    }
+
+    inputs = inputs.replace(/Seed:\s?(\d+),/g, function(match, seedNumber) {
+      return `
+        <button id="seedButton"
+        class="fastpnginfo_button"
+        style="color: var(--button-secondary-text-color);
+        margin-bottom: -5px;
+        cursor: pointer;">Seed</button>: ${seedNumber},`;
+    });
   }
 
-  return `<div class="fastpnginfo_cont"style="padding: 2px; margin-bottom: -10px;">${pro}<p>${inputs}</p></div>`;
+  return `<div class="fastpnginfo_cont" style="padding: 2px; margin-bottom: -10px;">${pro}<p>${inputs}</p></div>`;
 }
+
+document.addEventListener("click", function (event) {
+  const txt_output_el = gradioApp().querySelector("#fastpnginfo_geninfo  > label > textarea");
+  const fastpngButton = document.createElement("style");
+
+  fastpngButton.type = "text/css";
+  fastpngButton.innerText = `
+    .fastpnginfo_button {
+      transition: color 0.2s ease;
+    }
+
+    .fastpnginfo_button:hover {
+      color: var(--button-secondary-text-color-hover) !important;
+    }
+
+    .fastpnginfo_pulse {
+      animation: pulsePULSE 0.8s infinite alternate forwards;
+    }
+
+    @keyframes pulsePULSE {
+      0% { color: var(--button-secondary-text-color) !important; }
+      20% { color: var(--button-secondary-text-color-hover) !important; }
+      40% { color: var(--button-secondary-text-color) !important; }
+      60% { color: var(--button-secondary-text-color-hover) !important; }
+      80% { color: var(--button-secondary-text-color) !important; }
+      100% { color: var(--button-secondary-text-color-hover) !important; }
+    }`;
+  document.head.appendChild(fastpngButton);
+
+  function pulseButton(id) {
+    var button = document.getElementById(id);
+    button.classList.add('fastpnginfo_pulse');
+    setTimeout(() => {
+      button.classList.remove('fastpnginfo_pulse');
+    }, 1500);
+  }
+
+  if (event.target && event.target.id === "promptButton") {
+    pulseButton("promptButton");
+    const text = txt_output_el.value;
+    const negativePromptIndex = text.indexOf("Negative prompt:");
+    let promptText;
+    if (negativePromptIndex !== -1) {
+      promptText = text.substring(0, negativePromptIndex).trim();
+    } else {
+      const stepsIndex = text.indexOf("Steps:");
+      if (stepsIndex !== -1) {
+        promptText = text.substring(0, stepsIndex).trim();
+      } else {
+        promptText = text.trim();
+      }
+    }
+    navigator.clipboard.writeText(promptText);
+  }
+
+  if (event.target && event.target.id === "negativePromptButton") {
+    pulseButton("negativePromptButton");
+    const text = txt_output_el.value;
+    const negativePromptStart = text.indexOf("Negative prompt:");
+    const stepsStart = text.indexOf("Steps:");
+    if (negativePromptStart !== -1 && stepsStart !== -1 && stepsStart > negativePromptStart) {
+      const negativePromptText = text.slice(negativePromptStart + "Negative prompt:".length, stepsStart).trim();
+      navigator.clipboard.writeText(negativePromptText);
+    }
+  }
+
+  if (event.target && event.target.id === "paramsButton") {
+    pulseButton("paramsButton");
+    const text = txt_output_el.value;
+    const stepsStart = text.indexOf("Steps:");
+    if (stepsStart !== -1) {
+      const paramsText = text.slice(stepsStart).trim();
+      navigator.clipboard.writeText(paramsText);
+    }
+  }
+
+  if (event.target && event.target.id === "seedButton") {
+    pulseButton("seedButton");
+    const text = txt_output_el.value;
+    const seedMatch = text.match(/Seed:\s?(\d+),/);
+    if (seedMatch && seedMatch[1]) {
+      const seedText = seedMatch[1].trim();
+      navigator.clipboard.writeText(seedText);
+    }
+  }
+});

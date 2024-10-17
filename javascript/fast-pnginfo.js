@@ -159,11 +159,11 @@ function plainTextToHTML(inputs) {
   const SfwNAI = window.SfwNAI;
   const SrcNAI = window.SrcNAI;
 
-  const box = document.querySelector("#fastpnginfo_panel");
-  const sty = `display: block; margin-bottom: 2px; color: ${buttonColor};`;
-  const mTop = "margin-top: 16px;";
+  var box = document.querySelector("#fastpnginfo_panel");
+  var sty = `display: block; margin-bottom: 2px; color: ${buttonColor};`;
+  var mTop = "margin-top: 16px;";
 
-  const bS = `
+  var bS = `
     color: ${buttonColor};
     font-size: 15px;
     font-weight: bold;
@@ -174,7 +174,7 @@ function plainTextToHTML(inputs) {
     background-color: transparent;
     cursor: pointer;`;
 
-  const pro = `
+  var pro = `
     <button id="promptButton"
     class="fastpnginfo_button"
     style="${bS}; 
@@ -182,14 +182,14 @@ function plainTextToHTML(inputs) {
     margin-bottom: 2px;">
     Prompt</button>`;
 
-  const neg = `
+  var neg = `
     <button id="negativePromptButton"
     class="fastpnginfo_button"
     style="${bS} 
     ${mTop}">
     Negative Prompt</button>`;
 
-  const prm = `
+  var prm = `
     <button id="paramsButton"
     class="fastpnginfo_button"
     style="${bS} 

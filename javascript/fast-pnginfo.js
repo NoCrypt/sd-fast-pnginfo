@@ -103,7 +103,7 @@ async function fastpnginfo_parse_image() {
         + ", Clip skip: 2, ENSD: 31337";
 
     } else {
-      output = "Nothing To See Here";
+      output = `<span style='color: ${buttonColor}'>Nothing To See Here</span>`;
     }
 
     if (output) {
@@ -159,12 +159,12 @@ function plainTextToHTML(inputs) {
   const SfwNAI = window.SfwNAI;
   const SrcNAI = window.SrcNAI;
 
-  var box = document.querySelector("#fastpnginfo_panel");
-  var sty = "display: block; margin-bottom: 2px; color: var(--button-secondary-text-color);";
-  var mTop = "margin-top: 16px;";
+  const box = document.querySelector("#fastpnginfo_panel");
+  const sty = `display: block; margin-bottom: 2px; color: ${buttonColor};`;
+  const mTop = "margin-top: 16px;";
 
-  var bS = `
-    color: var(--button-secondary-text-color);
+  const bS = `
+    color: ${buttonColor};
     font-size: 15px;
     font-weight: bold;
     text-align: center;
@@ -174,7 +174,7 @@ function plainTextToHTML(inputs) {
     background-color: transparent;
     cursor: pointer;`;
 
-  var pro = `
+  const pro = `
     <button id="promptButton"
     class="fastpnginfo_button"
     style="${bS}; 
@@ -182,27 +182,27 @@ function plainTextToHTML(inputs) {
     margin-bottom: 2px;">
     Prompt</button>`;
 
-  var neg = `
+  const neg = `
     <button id="negativePromptButton"
     class="fastpnginfo_button"
     style="${bS} 
     ${mTop}">
     Negative Prompt</button>`;
 
-  var prm = `
+  const prm = `
     <button id="paramsButton"
     class="fastpnginfo_button"
     style="${bS} 
     ${mTop}">
     Params</button>`;
 
-  var ciH = `<b style="${sty} ${mTop}">Civitai Hashes</b>`;
-  var eNC = `<b style="${sty} ${mTop}">Encrypt</b>`;
-  var pWD = `<b style="${sty} ${mTop}">EncryptPwdSha</b>`;
-  var sFW = `<b style="${sty} ${mTop}">Software</b>`;
-  var sRC = `<b style="${sty} ${mTop}">Source</b>`;
+  const ciH = `<b style="${sty} ${mTop}">Civitai Hashes</b>`;
+  const eNC = `<b style="${sty} ${mTop}">Encrypt</b>`;
+  const pWD = `<b style="${sty} ${mTop}">EncryptPwdSha</b>`;
+  const sFW = `<b style="${sty} ${mTop}">Software</b>`;
+  const sRC = `<b style="${sty} ${mTop}">Source</b>`;
 
-  var br = /\n/g;
+  const br = /\n/g;
   
   if (inputs === undefined || inputs === null || inputs.trim() === '') {
     box.style.transition = 'none';
@@ -238,7 +238,7 @@ function plainTextToHTML(inputs) {
       return `
         <button id="seedButton"
         class="fastpnginfo_button"
-        style="color: var(--button-secondary-text-color);
+        style="color: ${buttonColor};
         margin-bottom: -5px;
         cursor: pointer;">Seed</button>: ${seedNumber},`;
     });
@@ -246,6 +246,9 @@ function plainTextToHTML(inputs) {
 
   return `<div class="fastpnginfo_cont" style="padding: 2px; margin-bottom: -10px;">${pro}<p>${inputs}</p></div>`;
 }
+
+const buttonColor = "var(--button-secondary-text-color)";
+const buttonHover = "var(--button-secondary-text-color-hover)";
 
 document.addEventListener("click", function (event) {
   const txt_output_el = gradioApp().querySelector("#fastpnginfo_geninfo  > label > textarea");
@@ -256,22 +259,19 @@ document.addEventListener("click", function (event) {
     .fastpnginfo_button {
       transition: color 0.2s ease;
     }
-
     .fastpnginfo_button:hover {
-      color: var(--button-secondary-text-color-hover) !important;
+      color: ${buttonHover} !important;
     }
-
     .fastpnginfo_pulse {
       animation: pulsePULSE 0.8s infinite alternate forwards;
     }
-
     @keyframes pulsePULSE {
-      0% { color: var(--button-secondary-text-color) !important; }
-      20% { color: var(--button-secondary-text-color-hover) !important; }
-      40% { color: var(--button-secondary-text-color) !important; }
-      60% { color: var(--button-secondary-text-color-hover) !important; }
-      80% { color: var(--button-secondary-text-color) !important; }
-      100% { color: var(--button-secondary-text-color-hover) !important; }
+      0% { color: ${buttonColor} !important; }
+      20% { color: ${buttonHover} !important; }
+      40% { color: ${buttonColor} !important; }
+      60% { color: ${buttonHover} !important; }
+      80% { color: ${buttonColor} !important; }
+      100% { color: ${buttonHover} !important; }
     }`;
   document.head.appendChild(fastpngButton);
 

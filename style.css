@@ -1,4 +1,11 @@
-#fastpnginfo_panel {opacity: 0}
+#fastpnginfo_panel {
+  opacity: 0;
+}
+
+#fastpnginfo_panel.show {
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
 
 .fastpnginfo_cont {
   overflow-wrap: break-word;

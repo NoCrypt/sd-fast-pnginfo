@@ -103,7 +103,7 @@ async function fastpnginfo_parse_image() {
         + ", Clip skip: 2, ENSD: 31337";
 
     } else {
-      output = `<span style='color: ${buttonColor}'>Nothing To See Here</span>`;
+      output = "Nothing To See Here";
     }
 
     if (output) {

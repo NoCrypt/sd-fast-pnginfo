@@ -93,14 +93,14 @@ async function fastpnginfo_parse_image() {
       const nai = JSON.parse(tags.Comment.description);
       nai.sampler = "Euler";
 
-      output = convertNAI(nai["prompt"])
-        + "\nNegative prompt: " + convertNAI(nai["uc"])
-        + "\nSteps: " + (nai["steps"])
-        + ", Sampler: " + (nai["sampler"])
-        + ", CFG scale: " + (parseFloat(nai["scale"]).toFixed(1))
-        + ", Seed: " + (nai["seed"])
-        + ", Size: " + (nai["width"]) + "x" + (nai["height"])
-        + ", Clip skip: 2, ENSD: 31337";
+      output = convertNAI(nai["prompt"]) +
+        "\nNegative prompt: " + convertNAI(nai["uc"]) +
+        "\nSteps: " + nai["steps"] +
+        ", Sampler: " + nai["sampler"] +
+        ", CFG scale: " + parseFloat(nai["scale"]).toFixed(1) +
+        ", Seed: " + nai["seed"] +
+        ", Size: " + nai["width"] + "x" + nai["height"] +
+        ", Clip skip: 2, ENSD: 31337";
 
     } else {
       output = "Nothing To See Here";
@@ -153,11 +153,24 @@ function convertNAI(input) {
   return result;
 }
 
+function fastpnginfoHover(button) {
+  button.addEventListener('mouseenter', function () {
+    button.classList.add('fastpnginfo_hover');
+  });
+
+  button.addEventListener('mouseleave', function () {
+    button.classList.remove('fastpnginfo_hover');
+  });
+}
+
 function plainTextToHTML(inputs) {
   const EnCrypt = window.EnCrypt;
   const EPwdSha = window.EPwdSha;
   const SfwNAI = window.SfwNAI;
   const SrcNAI = window.SrcNAI;
+
+  const buttonColor = "var(--button-secondary-text-color)";
+  const buttonHover = "var(--button-secondary-text-color-hover)";
 
   var box = document.querySelector("#fastpnginfo_panel");
   var sty = `display: block; margin-bottom: 2px; color: ${buttonColor};`;
@@ -176,25 +189,27 @@ function plainTextToHTML(inputs) {
 
   var pro = `
     <button id="promptButton"
-    class="fastpnginfo_button"
-    style="${bS}; 
-    margin-top: 2px; 
-    margin-bottom: 2px;">
-    Prompt</button>`;
+      class="fastpnginfo_button"
+      style="${bS}; margin-top: 2px; margin-bottom: 2px;"
+      title="Copy Prompt">
+      Prompt
+    </button>`;
 
   var neg = `
     <button id="negativePromptButton"
-    class="fastpnginfo_button"
-    style="${bS} 
-    ${mTop}">
-    Negative Prompt</button>`;
+      class="fastpnginfo_button"
+      style="${bS} ${mTop}"
+      title="Copy Negative Prompt">
+      Negative Prompt
+    </button>`;
 
   var prm = `
     <button id="paramsButton"
-    class="fastpnginfo_button"
-    style="${bS} 
-    ${mTop}">
-    Params</button>`;
+      class="fastpnginfo_button"
+      style="${bS} ${mTop}"
+      title="Copy Parameter Settings">
+      Params
+    </button>`;
 
   const ciH = `<b style="${sty} ${mTop}">Civitai Hashes</b>`;
   const eNC = `<b style="${sty} ${mTop}">Encrypt</b>`;
@@ -203,7 +218,7 @@ function plainTextToHTML(inputs) {
   const sRC = `<b style="${sty} ${mTop}">Source</b>`;
 
   const br = /\n/g;
-  
+
   if (inputs === undefined || inputs === null || inputs.trim() === '') {
     box.style.transition = 'none';
     box.style.opacity = '0';
@@ -237,29 +252,25 @@ function plainTextToHTML(inputs) {
     inputs = inputs.replace(/Seed:\s?(\d+),/g, function(match, seedNumber) {
       return `
         <button id="seedButton"
-        class="fastpnginfo_button"
-        style="color: ${buttonColor};
-        margin-bottom: -5px;
-        cursor: pointer;">Seed</button>: ${seedNumber},`;
+          class="fastpnginfo_button"
+          style="color: ${buttonColor};
+                 margin-bottom: -5px;
+                 cursor: pointer;"
+          title="Copy Seed Value">
+          Seed
+        </button>: ${seedNumber},`;
     });
   }
 
-  return `<div class="fastpnginfo_cont" style="padding: 2px; margin-bottom: -10px;">${pro}<p>${inputs}</p></div>`;
-}
+  const txt_output_el = gradioApp().querySelector("#fastpnginfo_geninfo > label > textarea");
 
-const buttonColor = "var(--button-secondary-text-color)";
-const buttonHover = "var(--button-secondary-text-color-hover)";
-
-document.addEventListener("click", function (event) {
-  const txt_output_el = gradioApp().querySelector("#fastpnginfo_geninfo  > label > textarea");
   const fastpngButton = document.createElement("style");
-
   fastpngButton.type = "text/css";
   fastpngButton.innerText = `
     .fastpnginfo_button {
       transition: color 0.2s ease;
     }
-    .fastpnginfo_button:hover {
+    .fastpnginfo_hover {
       color: ${buttonHover} !important;
     }
     .fastpnginfo_pulse {
@@ -275,60 +286,78 @@ document.addEventListener("click", function (event) {
     }`;
   document.head.appendChild(fastpngButton);
 
-  function pulseButton(id) {
-    var button = document.getElementById(id);
-    button.classList.add('fastpnginfo_pulse');
-    setTimeout(() => {
-      button.classList.remove('fastpnginfo_pulse');
-    }, 1500);
-  }
+  document.addEventListener("click", function (event) {
+    function pulseButton(id) {
+      var button = document.getElementById(id);
+      button.classList.remove('fastpnginfo_hover');
+      button.style.cursor = 'auto';
+      button.classList.add('fastpnginfo_pulse');
 
-  if (event.target && event.target.id === "promptButton") {
-    pulseButton("promptButton");
-    const text = txt_output_el.value;
-    const negativePromptIndex = text.indexOf("Negative prompt:");
-    let promptText;
-    if (negativePromptIndex !== -1) {
-      promptText = text.substring(0, negativePromptIndex).trim();
-    } else {
-      const stepsIndex = text.indexOf("Steps:");
-      if (stepsIndex !== -1) {
-        promptText = text.substring(0, stepsIndex).trim();
+      setTimeout(() => {
+        button.classList.remove('fastpnginfo_pulse');
+        button.style.cursor = 'pointer';
+      }, 1500);
+    }
+
+    if (event.target && event.target.id === "promptButton") {
+      pulseButton("promptButton");
+      const text = txt_output_el.value;
+      const negativePromptIndex = text.indexOf("Negative prompt:");
+      let promptText;
+      if (negativePromptIndex !== -1) {
+        promptText = text.substring(0, negativePromptIndex).trim();
       } else {
-        promptText = text.trim();
+        const stepsIndex = text.indexOf("Steps:");
+        if (stepsIndex !== -1) {
+          promptText = text.substring(0, stepsIndex).trim();
+        } else {
+          promptText = text.trim();
+        }
+      }
+      navigator.clipboard.writeText(promptText);
+    }
+
+    if (event.target && event.target.id === "negativePromptButton") {
+      pulseButton("negativePromptButton");
+      const text = txt_output_el.value;
+      const negativePromptStart = text.indexOf("Negative prompt:");
+      const stepsStart = text.indexOf("Steps:");
+      if (negativePromptStart !== -1 && stepsStart !== -1 && stepsStart > negativePromptStart) {
+        const negativePromptText = text.slice(negativePromptStart + "Negative prompt:".length, stepsStart).trim();
+        navigator.clipboard.writeText(negativePromptText);
       }
     }
-    navigator.clipboard.writeText(promptText);
-  }
 
-  if (event.target && event.target.id === "negativePromptButton") {
-    pulseButton("negativePromptButton");
-    const text = txt_output_el.value;
-    const negativePromptStart = text.indexOf("Negative prompt:");
-    const stepsStart = text.indexOf("Steps:");
-    if (negativePromptStart !== -1 && stepsStart !== -1 && stepsStart > negativePromptStart) {
-      const negativePromptText = text.slice(negativePromptStart + "Negative prompt:".length, stepsStart).trim();
-      navigator.clipboard.writeText(negativePromptText);
+    if (event.target && event.target.id === "paramsButton") {
+      pulseButton("paramsButton");
+      const text = txt_output_el.value;
+      const stepsStart = text.indexOf("Steps:");
+      if (stepsStart !== -1) {
+        const paramsText = text.slice(stepsStart).trim();
+        navigator.clipboard.writeText(paramsText);
+      }
     }
-  }
 
-  if (event.target && event.target.id === "paramsButton") {
-    pulseButton("paramsButton");
-    const text = txt_output_el.value;
-    const stepsStart = text.indexOf("Steps:");
-    if (stepsStart !== -1) {
-      const paramsText = text.slice(stepsStart).trim();
-      navigator.clipboard.writeText(paramsText);
+    if (event.target && event.target.id === "seedButton") {
+      pulseButton("seedButton");
+      const text = txt_output_el.value;
+      const seedMatch = text.match(/Seed:\s?(\d+),/);
+      if (seedMatch && seedMatch[1]) {
+        const seedText = seedMatch[1].trim();
+        navigator.clipboard.writeText(seedText);
+      }
     }
-  }
+  });
 
-  if (event.target && event.target.id === "seedButton") {
-    pulseButton("seedButton");
-    const text = txt_output_el.value;
-    const seedMatch = text.match(/Seed:\s?(\d+),/);
-    if (seedMatch && seedMatch[1]) {
-      const seedText = seedMatch[1].trim();
-      navigator.clipboard.writeText(seedText);
-    }
-  }
-});
+  setTimeout(() => {
+    const buttons = document.querySelectorAll('.fastpnginfo_button');
+    buttons.forEach(button => fastpnginfoHover(button));
+  }, 0);
+
+  return `
+    <div class="fastpnginfo_cont"
+      style="padding: 2px; margin-bottom: -10px;">
+      ${pro}<p>${inputs}</p>
+    </div>
+  `;
+}

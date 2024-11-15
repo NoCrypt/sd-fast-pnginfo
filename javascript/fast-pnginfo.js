@@ -59,8 +59,14 @@ async function fastpnginfo_parse_image() {
     window.EnCrypt = tags.Encrypt ? tags.Encrypt.description : '';
     window.EPwdSha = tags.EncryptPwdSha ? tags.EncryptPwdSha.description : '';
 
-    if (tags.parameters) {
-      output = tags.parameters.description;
+    if (tags.parameters && tags.parameters.description) {
+      if (tags.parameters.description.includes("sui_image_params")) {
+        const parseDesc = JSON.parse(tags.parameters.description);
+        const Sui = parseDesc["sui_image_params"];
+        output = convertSwarmUI(Sui);
+      } else {
+        output = tags.parameters.description;
+      }
 
     } else if (tags.UserComment && tags.UserComment.value) {
       const ray = tags.UserComment.value;
@@ -153,14 +159,42 @@ function convertNAI(input) {
   return result;
 }
 
-function fastpnginfoHover(button) {
-  button.addEventListener('mouseenter', function () {
-    button.classList.add('fastpnginfo_hover');
-  });
-
-  button.addEventListener('mouseleave', function () {
-    button.classList.remove('fastpnginfo_hover');
-  });
+function convertSwarmUI(Sui) {
+  let output = "";
+  if (Sui.prompt) output += `${Sui.prompt}\n`;
+  if (Sui.negativeprompt) output += `Negative prompt: ${Sui.negativeprompt}\n`;
+  if (Sui.steps) output += `Steps: ${Sui.steps}, `;
+  if (Sui.sampler) output += `Sampler: ${Sui.sampler}, `;
+  if (Sui.scheduler) output += `Schedule type: ${Sui.scheduler}, `;
+  if (Sui.cfgscale) output += `CFG scale: ${Sui.cfgscale}, `;
+  if (Sui.seed) output += `Seed: ${Sui.seed}, `;
+  if (Sui.width && Sui.height) 
+    output += `Size: ${Sui.width}x${Sui.height}, `;
+  if (Sui.model) output += `Model: ${Sui.model}, `;
+  if (Sui.vae) output += `VAE: ${Sui.vae}, `;
+  output = output.trim().replace(/,$/, "");
+  let otherParams = Object.entries(Sui)
+    .filter(([key]) => {
+      return ![
+        "prompt", 
+        "negativeprompt", 
+        "steps", 
+        "sampler", 
+        "scheduler", 
+        "cfgscale", 
+        "seed", 
+        "width", 
+        "height", 
+        "model", 
+        "vae"
+      ].includes(key);
+    })
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(", ");
+  if (otherParams) {
+    output += (output ? ", " : "") + otherParams;
+  }
+  return output.trim();
 }
 
 function plainTextToHTML(inputs) {
@@ -172,6 +206,7 @@ function plainTextToHTML(inputs) {
   const buttonColor = "var(--button-secondary-text-color)";
   const buttonHover = "var(--button-secondary-text-color-hover)";
 
+  var SendButton = document.querySelector("#fastpngSendButton");
   var box = document.querySelector("#fastpnginfo_panel");
   var sty = `display: block; margin-bottom: 2px; color: ${buttonColor};`;
   var mTop = "margin-top: 16px;";
@@ -223,9 +258,13 @@ function plainTextToHTML(inputs) {
     box.style.transition = 'none';
     box.style.opacity = '0';
     box.classList.remove('show');
+    SendButton.style.display = 'none';
   } else {
-    if (inputs.includes("Nothing To See Here")) {
+    if (inputs.trim().includes("Nothing To See Here")) {
       pro = '';
+      SendButton.style.display = 'none';
+    } else {
+      SendButton.style.display = 'flex'; 
     }
 
     box.classList.add('show');
@@ -233,7 +272,7 @@ function plainTextToHTML(inputs) {
     box.style.opacity = '1';
 
     inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(br, '<br>');
-    inputs = inputs.replace(/Negative prompt:/, neg).replace(/Steps:/, match => prm + match);
+    inputs = inputs.replace(/Negative prompt:/, neg).replace(/(Steps:|model:)/, match => prm + match);
     inputs = inputs.replace(/, Hashes:/, ciH);
 
     if (EnCrypt && EnCrypt.trim() !== '') {
@@ -249,7 +288,7 @@ function plainTextToHTML(inputs) {
       inputs += `<br>${sRC}${SrcNAI}`;
     }
 
-    inputs = inputs.replace(/Seed:\s?(\d+),/g, function(match, seedNumber) {
+    inputs = inputs.replace(/Seed:\s?(\d+),/gi, function(match, seedNumber) {
       return `
         <button id="seedButton"
           class="fastpnginfo_button"
@@ -299,6 +338,40 @@ function plainTextToHTML(inputs) {
       }, 1500);
     }
 
+    function fastpngNotify(msg) {
+      const NoTify = document.createElement('div');
+      NoTify.className = 'copy-NoTify';
+      NoTify.innerText = msg;
+
+      NoTify.style.position = 'fixed';
+      NoTify.style.top = '-50px';
+      NoTify.style.right = '20px';
+      NoTify.style.padding = '5px 5px';
+      NoTify.style.fontSize = '30px';
+      NoTify.style.fontWeight = 'bold';
+      NoTify.style.zIndex = '9999';
+      NoTify.style.opacity = '0';
+      NoTify.style.transition = 'opacity 0.5s, transform 0.5s';
+
+      document.body.appendChild(NoTify);
+      setTimeout(() => {
+        NoTify.style.opacity = '1';
+        NoTify.style.transform = 'translateY(70px)';
+      }, 100);
+      setTimeout(() => {
+        NoTify.style.opacity = '0';
+        NoTify.style.transform = 'translateX(100rem)';
+        setTimeout(() => {
+          document.body.removeChild(NoTify);
+        }, 500);
+      }, 1000);
+    }
+
+    function fastpngCopy(CopyCopy) {
+      navigator.clipboard.writeText(CopyCopy);
+      fastpngNotify("📋");
+    }
+
     if (event.target && event.target.id === "promptButton") {
       pulseButton("promptButton");
       const text = txt_output_el.value;
@@ -314,7 +387,7 @@ function plainTextToHTML(inputs) {
           promptText = text.trim();
         }
       }
-      navigator.clipboard.writeText(promptText);
+      fastpngCopy(promptText);
     }
 
     if (event.target && event.target.id === "negativePromptButton") {
@@ -324,7 +397,7 @@ function plainTextToHTML(inputs) {
       const stepsStart = text.indexOf("Steps:");
       if (negativePromptStart !== -1 && stepsStart !== -1 && stepsStart > negativePromptStart) {
         const negativePromptText = text.slice(negativePromptStart + "Negative prompt:".length, stepsStart).trim();
-        navigator.clipboard.writeText(negativePromptText);
+        fastpngCopy(negativePromptText);
       }
     }
 
@@ -334,20 +407,30 @@ function plainTextToHTML(inputs) {
       const stepsStart = text.indexOf("Steps:");
       if (stepsStart !== -1) {
         const paramsText = text.slice(stepsStart).trim();
-        navigator.clipboard.writeText(paramsText);
+        fastpngCopy(paramsText);
       }
     }
 
     if (event.target && event.target.id === "seedButton") {
       pulseButton("seedButton");
       const text = txt_output_el.value;
-      const seedMatch = text.match(/Seed:\s?(\d+),/);
+      const seedMatch = text.match(/Seed:\s?(\d+),/i);
       if (seedMatch && seedMatch[1]) {
         const seedText = seedMatch[1].trim();
-        navigator.clipboard.writeText(seedText);
+        fastpngCopy(seedText);
       }
     }
   });
+
+  function fastpnginfoHover(button) {
+    button.addEventListener('mouseenter', function () {
+      button.classList.add('fastpnginfo_hover');
+    });
+
+    button.addEventListener('mouseleave', function () {
+      button.classList.remove('fastpnginfo_hover');
+    });
+  }
 
   setTimeout(() => {
     const buttons = document.querySelectorAll('.fastpnginfo_button');

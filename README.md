@@ -12,6 +12,5 @@ Support:
 # Preview
 
 <p align="center">
-  <img src="https://github.com/gutris1/segsmaker/blob/main/pre/fastpnginfo.png", widht=1000px>
-  <img src="https://github.com/user-attachments/assets/246f2346-f240-4a32-84d0-ea17a63966a8", widht=1000px>
+  <img src="https://github.com/user-attachments/assets/8a554ae4-da6f-4396-b9da-be86adf1ef2d", widht=1000px>
 </p>

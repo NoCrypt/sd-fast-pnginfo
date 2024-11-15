@@ -6,10 +6,10 @@ import gradio as gr
 def on_ui_tabs():
     with gr.Blocks(analytics_enabled=False) as fast_pnginfo:
         with FormRow(equal_height=False):
-            with FormColumn(variant="panel"):
+            with FormColumn(variant="compact"):
                 image = gr.Image(elem_id="fastpnginfo_image", source="upload", interactive=True, type="pil", show_label=False)
 
-                with FormRow(variant="compact"):
+                with FormRow(variant="compact", elem_id="fastpngSendButton"):
                     buttons = tempe.create_buttons(["txt2img", "img2img", "inpaint", "extras"])
 
             with gr.Column(variant="panel", scale=2, elem_id="fastpnginfo_panel"):

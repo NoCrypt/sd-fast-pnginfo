@@ -7,6 +7,16 @@
   transition: opacity 0.2s ease;
 }
 
+#fastpngSendButton {
+  display: none;
+  margin-top: 5px !important;
+}
+
+#fastpnginfo_image {
+  background: var(--panel-background-fill);
+  border-radius: 0.5rem !important;
+}
+
 .fastpnginfo_cont {
   overflow-wrap: break-word;
   max-width: 100%;

@@ -8,8 +8,22 @@ async function fastpnginfo_parse_image() {
   const fastpnginfoHTML = gradioApp().querySelector("#fastpnginfo_html");
   const imageContainer = document.getElementById("fastpnginfo_image");
 
-  let img_el = gradioApp().querySelector("#fastpnginfo_image > div[data-testid='image'] > div > img");
+  let img_el = imageContainer.querySelector('img');
+  let cB = imageContainer.querySelector('button.svelte-1030q2h[aria-label="Clear"]');
 
+  if (cB) {
+    cB.style.cssText += `
+      transform: scale(2) !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      gap: 0 !important;
+      border-radius: 50% !important;
+      box-sizing: border-box;
+      border: 0 !important;
+      color: var(--button-secondary-text-color-hover) !important;
+    `;
+  }
+  
   if (img_el) {
     img_el.style.width = "auto";
     img_el.style.height = "auto";
@@ -17,7 +31,7 @@ async function fastpnginfo_parse_image() {
 
     img_el.onload = function() {
       const imgAspectRatio = img_el.naturalWidth / img_el.naturalHeight;
-      const containerWidth = imageContainer.clientWidth; 
+      const containerWidth = imageContainer.clientWidth;
       const newHeight = containerWidth / imgAspectRatio;
       const fullSizeHeight = getComputedStyle(imageContainer).getPropertyValue('var(--size-full)').trim();
       const fullSizeHeightValue = parseFloat(fullSizeHeight);
@@ -49,6 +63,123 @@ async function fastpnginfo_parse_image() {
     setTimeout(() => {
       URL.revokeObjectURL(blobUrl);
     }, 1000);
+  });
+
+  let ZoomeD = false;
+  let GropTime;
+  let Groping = false;
+  let SX, SY, IX, IY;
+  let Groped = false;
+
+  img_el.addEventListener('click', async () => {
+    if (ZoomeD) return;
+
+    const ExZdiv = document.querySelector('.zoom-container');
+    if (ExZdiv) {
+      ExZdiv.remove();
+    }
+
+    const Zdiv = document.createElement('div');
+    Zdiv.classList.add('zoom-container');
+
+    document.body.style.overflow = 'hidden';
+
+    Zdiv.style.position = 'fixed';
+    Zdiv.style.top = '0';
+    Zdiv.style.left = '0';
+    Zdiv.style.width = '100%';
+    Zdiv.style.height = '100%';
+    Zdiv.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    Zdiv.style.display = 'flex';
+    Zdiv.style.justifyContent = 'center';
+    Zdiv.style.alignItems = 'center';
+    Zdiv.style.zIndex = '9999';
+    Zdiv.style.cursor = 'zoom-out';
+
+    Zdiv.style.overflow = 'hidden';
+
+    const Zimg = img_el.cloneNode();
+    Zimg.style.transform = 'scale(1)';
+    Zimg.style.transition = 'transform 0.3s ease';
+    Zimg.style.maxWidth = '100%';
+    Zimg.style.maxHeight = '100%';
+    Zimg.style.objectFit = 'contain';
+    Zimg.style.position = 'relative';
+    Zimg.style.left = '0px';
+    Zimg.style.top = '0px';
+
+    Zdiv.appendChild(Zimg);
+    document.body.appendChild(Zdiv);
+
+    Zdiv.addEventListener('wheel', (e) => {
+      if (e.deltaY > 0) {
+        Zimg.style.transform = 'scale(' + (parseFloat(Zimg.style.transform.slice(6, -1)) || 1) * 1.1 + ')';
+      } else {
+        Zimg.style.transform = 'scale(' + (parseFloat(Zimg.style.transform.slice(6, -1)) || 1) / 1.1 + ')';
+      }
+    });
+
+    Zimg.addEventListener('mousedown', (e) => {
+      GropTime = setTimeout(() => {
+        Groping = true;
+        Zimg.style.cursor = 'grabbing';
+        Zdiv.style.cursor = 'grabbing';
+
+        SX = e.clientX;
+        SY = e.clientY;
+        IX = parseInt(Zimg.style.left) || 0;
+        IY = parseInt(Zimg.style.top) || 0;
+      }, 100);
+
+      e.preventDefault();
+    });
+
+    Zdiv.addEventListener('mousemove', (e) => {
+      if (!Groping) return;
+
+      const dx = e.clientX - SX;
+      const dy = e.clientY - SY;
+
+      Zimg.style.left = `${IX + dx}px`;
+      Zimg.style.top = `${IY + dy}px`;
+    });
+
+    Zdiv.addEventListener('mouseup', () => {
+      if (Groping) {
+        Groped = true;
+        setTimeout(() => {
+          Groped = false;
+        }, 100);
+      }
+
+      clearTimeout(GropTime);
+      Groping = false;
+      Zimg.style.cursor = 'zoom-out';
+      Zdiv.style.cursor = 'zoom-out';
+    });
+
+    Zdiv.addEventListener('mouseleave', () => {
+      clearTimeout(GropTime);
+      Groping = false;
+      Zimg.style.cursor = 'zoom-out';
+      Zdiv.style.cursor = 'zoom-out';
+    });
+
+    Zimg.addEventListener('click', (e) => {
+      if (Groping || Groped) {
+        e.stopPropagation();
+      }
+    });
+
+    Zdiv.addEventListener('click', () => {
+      if (!Groping && !Groped) {
+        Zdiv.remove();
+        document.body.style.overflow = 'auto';
+        ZoomeD = false;
+      }
+    });
+
+    ZoomeD = true;
   });
 
   let arrayBuffer = await img_blob.arrayBuffer();

@@ -66,113 +66,129 @@ async function fastpnginfo_parse_image() {
   });
 
   let ZoomeD = false;
-  let GropTime;
-  let Groping = false;
-  let SX, SY, IX, IY;
-  let Groped = false;
 
   img_el.addEventListener('click', async () => {
     if (ZoomeD) return;
-
     const ExZdiv = document.querySelector('.fastpnginfo-zoom');
     if (ExZdiv) {
       ExZdiv.remove();
     }
-
     const Zdiv = document.createElement('div');
     Zdiv.classList.add('fastpnginfo-zoom');
-
     document.body.style.overflow = 'hidden';
 
-    Zdiv.style.position = 'fixed';
-    Zdiv.style.top = '0';
-    Zdiv.style.left = '0';
-    Zdiv.style.width = '100%';
-    Zdiv.style.height = '100%';
-    Zdiv.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    Zdiv.style.display = 'flex';
-    Zdiv.style.justifyContent = 'center';
-    Zdiv.style.alignItems = 'center';
-    Zdiv.style.zIndex = '9999';
-    Zdiv.style.cursor = 'zoom-out';
-
-    Zdiv.style.overflow = 'hidden';
+    Object.assign(Zdiv.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: '9999',
+      cursor: 'zoom-out',
+      overflow: 'hidden'
+    });
 
     const Zimg = img_el.cloneNode();
-    Zimg.style.transform = 'scale(1)';
-    Zimg.style.transition = 'transform 0.3s ease';
-    Zimg.style.maxWidth = '100%';
-    Zimg.style.maxHeight = '100%';
-    Zimg.style.objectFit = 'contain';
-    Zimg.style.position = 'relative';
-    Zimg.style.left = '0px';
-    Zimg.style.top = '0px';
+
+    Object.assign(Zimg.style, {
+      maxWidth: '100%',
+      maxHeight: '100%',
+      objectFit: 'contain',
+      cursor: 'grab',
+      transition: 'transform 0.3s ease'
+    });
 
     Zdiv.appendChild(Zimg);
     document.body.appendChild(Zdiv);
 
-    Zdiv.addEventListener('wheel', (e) => {
-      if (e.deltaY > 0) {
-        Zimg.style.transform = 'scale(' + (parseFloat(Zimg.style.transform.slice(6, -1)) || 1) * 1.1 + ')';
-      } else {
-        Zimg.style.transform = 'scale(' + (parseFloat(Zimg.style.transform.slice(6, -1)) || 1) / 1.1 + ')';
-      }
+    let scale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let Groping = false;
+    let GropinTime = null;
+    let Groped = false;
+
+    Zimg.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      Zimg.style.transition = 'transform 0.3s ease';
+      const centerX = Zdiv.offsetWidth / 2;
+      const centerY = Zdiv.offsetHeight / 2;
+
+      const delta = Math.max(-1, Math.min(1, e.wheelDelta || -e.detail));
+      const zoomStep = 0.1;
+      const zoom = 1 + delta * zoomStep;
+      const lastScale = scale;
+      scale *= zoom;
+      scale = Math.max(0.1, scale);
+
+      const imgCenterX = offsetX + centerX;
+      const imgCenterY = offsetY + centerY;
+
+      offsetX = e.clientX - 
+        ((e.clientX - imgCenterX) / lastScale) * scale - 
+        centerX;
+      offsetY = e.clientY - 
+        ((e.clientY - imgCenterY) / lastScale) * scale - 
+        centerY;
+
+      Zimg.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     });
 
     Zimg.addEventListener('mousedown', (e) => {
-      GropTime = setTimeout(() => {
-        Groping = true;
-        Zimg.style.cursor = 'grabbing';
-        Zdiv.style.cursor = 'grabbing';
+      e.preventDefault();
 
-        SX = e.clientX;
-        SY = e.clientY;
-        IX = parseInt(Zimg.style.left) || 0;
-        IY = parseInt(Zimg.style.top) || 0;
+      GropinTime = setTimeout(() => {
+        Groped = true;
+        Zimg.style.cursor = 'grab';
       }, 100);
 
-      e.preventDefault();
+      lastX = e.clientX - offsetX;
+      lastY = e.clientY - offsetY;
     });
 
     Zdiv.addEventListener('mousemove', (e) => {
-      if (!Groping) return;
+      if (!Groped) return;
 
-      const dx = e.clientX - SX;
-      const dy = e.clientY - SY;
+      e.preventDefault();
+      Groping = true;
 
-      Zimg.style.left = `${IX + dx}px`;
-      Zimg.style.top = `${IY + dy}px`;
+      const deltaX = e.clientX - lastX;
+      const deltaY = e.clientY - lastY;
+
+      offsetX = deltaX;
+      offsetY = deltaY;
+
+      Zimg.style.transition = '';
+      Zimg.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${scale})`;
     });
 
-    Zdiv.addEventListener('mouseup', () => {
-      if (Groping) {
-        Groped = true;
-        setTimeout(() => {
-          Groped = false;
-        }, 100);
-      }
+    ['mouseup', 'mouseleave'].forEach(eventType => {
+      Zdiv.addEventListener(eventType, () => {
+        clearTimeout(GropinTime);
 
-      clearTimeout(GropTime);
-      Groping = false;
-      Zimg.style.cursor = 'zoom-out';
-      Zdiv.style.cursor = 'zoom-out';
+        if (!Groped) {
+          Zdiv.remove();
+          document.body.style.overflow = 'auto';
+          ZoomeD = false;
+          return;
+        }
+
+        Groping = false;
+        Groped = false;
+        Zimg.style.cursor = 'grab';
+      });
     });
 
-    Zdiv.addEventListener('mouseleave', () => {
-      clearTimeout(GropTime);
-      Groping = false;
-      Zimg.style.cursor = 'zoom-out';
-      Zdiv.style.cursor = 'zoom-out';
-    });
-
-    Zimg.addEventListener('click', (e) => {
-      if (Groping || Groped) {
-        e.stopPropagation();
-      }
-    });
-
-    Zdiv.addEventListener('click', () => {
-      if (!Groping && !Groped) {
+    Zdiv.addEventListener('click', (e) => {
+      if (e.target === Zdiv) {
         Zdiv.remove();
         document.body.style.overflow = 'auto';
         ZoomeD = false;

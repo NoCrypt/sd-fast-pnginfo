@@ -74,13 +74,13 @@ async function fastpnginfo_parse_image() {
   img_el.addEventListener('click', async () => {
     if (ZoomeD) return;
 
-    const ExZdiv = document.querySelector('.zoom-container');
+    const ExZdiv = document.querySelector('.fastpnginfo-zoom');
     if (ExZdiv) {
       ExZdiv.remove();
     }
 
     const Zdiv = document.createElement('div');
-    Zdiv.classList.add('zoom-container');
+    Zdiv.classList.add('fastpnginfo-zoom');
 
     document.body.style.overflow = 'hidden';
 

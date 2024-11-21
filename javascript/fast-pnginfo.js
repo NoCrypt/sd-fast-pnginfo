@@ -411,7 +411,7 @@ function plainTextToHTML(inputs) {
       pro = '';
       SendButton.style.display = 'none';
     } else {
-      SendButton.style.display = 'flex'; 
+      SendButton.style.display = 'flex';
     }
 
     box.classList.add('show');

@@ -20,7 +20,7 @@ async function fastpnginfo_parse_image() {
       border-radius: 50% !important;
       box-sizing: border-box;
       border: 0 !important;
-      color: var(--button-secondary-text-color-hover) !important;
+      color: var(--primary-400) !important;
     `;
   }
   
@@ -350,8 +350,8 @@ function plainTextToHTML(inputs) {
   const SfwNAI = window.SfwNAI;
   const SrcNAI = window.SrcNAI;
 
-  const buttonColor = "var(--button-secondary-text-color)";
-  const buttonHover = "var(--button-secondary-text-color-hover)";
+  const buttonColor = 'var(--primary-400)';
+  const buttonHover = 'var(--primary-600)';
 
   var SendButton = document.querySelector("#fastpngSendButton");
   var box = document.querySelector("#fastpnginfo_panel");
@@ -454,7 +454,7 @@ function plainTextToHTML(inputs) {
   fastpngButton.type = "text/css";
   fastpngButton.innerText = `
     .fastpnginfo_button {
-      transition: color 0.2s ease;
+      transition: color 0.3s ease;
     }
     .fastpnginfo_hover {
       color: ${buttonHover} !important;

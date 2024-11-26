@@ -8,6 +8,7 @@ Support:
 - PNG parameters
 - JPEG and Avif userComment
 - Novel AI parameters with brackets conversion
+- SwarmUI parameters
 
 # Preview
 

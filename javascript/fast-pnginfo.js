@@ -4,7 +4,7 @@ async function fastpnginfo_parse_image() {
   window.sourceNAI = '';
   window.softWare = '';
 
-  const fastpngRawOutput = gradioApp().querySelector("#fastpnginfo_geninfo > label > textarea");
+  const fastpngRawOutput = gradioApp().querySelector("#fastpngGenInfo > label > textarea");
   const fastpngHTML = gradioApp().querySelector("#fastpngHTML");
   const fastpngImage = document.getElementById("fastpngImage");
 
@@ -495,7 +495,8 @@ function plainTextToHTML(inputs) {
     }
   }
 
-  const fastpngRawOutput = gradioApp().querySelector("#fastpnginfo_geninfo > label > textarea");
+  const fastpngRawOutput = gradioApp().querySelector("#fastpngGenInfo > label > textarea");
+  const OutputRaw = fastpngRawOutput.value;
 
   const fastpngButton = document.createElement("style");
   fastpngButton.type = "text/css";
@@ -568,17 +569,16 @@ function plainTextToHTML(inputs) {
 
     if (event.target && event.target.id === "promptButton") {
       pulseButton("promptButton");
-      const text = fastpngRawOutput.value;
-      const negativePromptIndex = text.indexOf("Negative prompt:");
+      const negativePromptIndex = OutputRaw.indexOf("Negative prompt:");
       let promptText;
       if (negativePromptIndex !== -1) {
-        promptText = text.substring(0, negativePromptIndex).trim();
+        promptText = OutputRaw.substring(0, negativePromptIndex).trim();
       } else {
-        const stepsIndex = text.indexOf("Steps:");
+        const stepsIndex = OutputRaw.indexOf("Steps:");
         if (stepsIndex !== -1) {
-          promptText = text.substring(0, stepsIndex).trim();
+          promptText = OutputRaw.substring(0, stepsIndex).trim();
         } else {
-          promptText = text.trim();
+          promptText = OutputRaw.trim();
         }
       }
       fastpngCopy(promptText);
@@ -586,29 +586,26 @@ function plainTextToHTML(inputs) {
 
     if (event.target && event.target.id === "negativePromptButton") {
       pulseButton("negativePromptButton");
-      const text = fastpngRawOutput.value;
-      const negativePromptStart = text.indexOf("Negative prompt:");
-      const stepsStart = text.indexOf("Steps:");
+      const negativePromptStart = OutputRaw.indexOf("Negative prompt:");
+      const stepsStart = OutputRaw.indexOf("Steps:");
       if (negativePromptStart !== -1 && stepsStart !== -1 && stepsStart > negativePromptStart) {
-        const negativePromptText = text.slice(negativePromptStart + "Negative prompt:".length, stepsStart).trim();
+        const negativePromptText = OutputRaw.slice(negativePromptStart + "Negative prompt:".length, stepsStart).trim();
         fastpngCopy(negativePromptText);
       }
     }
 
     if (event.target && event.target.id === "paramsButton") {
       pulseButton("paramsButton");
-      const text = fastpngRawOutput.value;
-      const stepsStart = text.indexOf("Steps:");
+      const stepsStart = OutputRaw.indexOf("Steps:");
       if (stepsStart !== -1) {
-        const paramsText = text.slice(stepsStart).trim();
+        const paramsText = OutputRaw.slice(stepsStart).trim();
         fastpngCopy(paramsText);
       }
     }
 
     if (event.target && event.target.id === "seedButton") {
       pulseButton("seedButton");
-      const text = fastpngRawOutput.value;
-      const seedMatch = text.match(/Seed:\s?(\d+),/i);
+      const seedMatch = OutputRaw.match(/Seed:\s?(\d+),/i);
       if (seedMatch && seedMatch[1]) {
         const seedText = seedMatch[1].trim();
         fastpngCopy(seedText);
@@ -616,7 +613,7 @@ function plainTextToHTML(inputs) {
     }
   });
 
-  function fastpnginfoHover(button) {
+  function fastpngHoverButtons(button) {
     button.addEventListener('mouseenter', function () {
       button.classList.add('fastpngButtonsHover');
     });
@@ -628,7 +625,7 @@ function plainTextToHTML(inputs) {
 
   setTimeout(() => {
     const buttons = document.querySelectorAll('.fastpngButtons');
-    buttons.forEach(button => fastpnginfoHover(button));
+    buttons.forEach(button => fastpngHoverButtons(button));
   }, 0);
 
   return `<div class="fastpngHTMLOutput" style="margin-bottom: -8px;">${outputHTML}</div>`;

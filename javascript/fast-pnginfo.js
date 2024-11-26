@@ -1,18 +1,18 @@
 async function fastpnginfo_parse_image() {
   window.EnCrypt = '';
-  window.EPwdSha = '';
-  window.SfwNAI = '';
-  window.SrcNAI = '';
+  window.PWSha = '';
+  window.sourceNAI = '';
+  window.softWare = '';
 
-  const txt_output_el = gradioApp().querySelector("#fastpnginfo_geninfo > label > textarea");
-  const fastpnginfoHTML = gradioApp().querySelector("#fastpnginfo_html");
-  const imageContainer = document.getElementById("fastpnginfo_image");
+  const fastpngRawOutput = gradioApp().querySelector("#fastpnginfo_geninfo > label > textarea");
+  const fastpngHTML = gradioApp().querySelector("#fastpngHTML");
+  const fastpngImage = document.getElementById("fastpngImage");
 
-  let img_el = imageContainer.querySelector('img');
-  let cB = imageContainer.querySelector('button.svelte-1030q2h[aria-label="Clear"]');
+  let imgEL = fastpngImage.querySelector('img');
+  let closeButton = fastpngImage.querySelector('button.svelte-1030q2h[aria-label="Clear"]');
 
-  if (cB) {
-    cB.style.cssText += `
+  if (closeButton) {
+    closeButton.style.cssText += `
       transform: scale(2) !important;
       margin: 0 !important;
       padding: 0 !important;
@@ -24,35 +24,35 @@ async function fastpnginfo_parse_image() {
     `;
   }
   
-  if (img_el) {
-    img_el.style.width = "auto";
-    img_el.style.height = "auto";
-    img_el.style.objectFit = "contain";
+  if (imgEL) {
+    imgEL.style.width = "auto";
+    imgEL.style.height = "auto";
+    imgEL.style.objectFit = "contain";
 
-    img_el.onload = function() {
-      const imgAspectRatio = img_el.naturalWidth / img_el.naturalHeight;
-      const containerWidth = imageContainer.clientWidth;
+    imgEL.onload = function() {
+      const imgAspectRatio = imgEL.naturalWidth / imgEL.naturalHeight;
+      const containerWidth = fastpngImage.clientWidth;
       const newHeight = containerWidth / imgAspectRatio;
-      const fullSizeHeight = getComputedStyle(imageContainer).getPropertyValue('var(--size-full)').trim();
+      const fullSizeHeight = getComputedStyle(fastpngImage).getPropertyValue('var(--size-full)').trim();
       const fullSizeHeightValue = parseFloat(fullSizeHeight);
 
       if (newHeight > fullSizeHeightValue) {
-        imageContainer.style.height = `${newHeight}px`;
+        fastpngImage.style.height = `${newHeight}px`;
       } else {
-        imageContainer.style.height = fullSizeHeight;
+        fastpngImage.style.height = fullSizeHeight;
       }
     };
   } else {
-    const fullSizeHeight = getComputedStyle(imageContainer).getPropertyValue('var(--size-full)').trim();
-    imageContainer.style.height = fullSizeHeight;
-    fastpnginfoHTML.innerHTML = plainTextToHTML('');
+    const fullSizeHeight = getComputedStyle(fastpngImage).getPropertyValue('var(--size-full)').trim();
+    fastpngImage.style.height = fullSizeHeight;
+    fastpngHTML.innerHTML = plainTextToHTML('');
     return;
   }
 
-  let response = await fetch(img_el.src);
+  let response = await fetch(imgEL.src);
   let img_blob = await response.blob();
   let blobUrl = URL.createObjectURL(img_blob);
-  img_el.src = blobUrl;
+  imgEL.src = blobUrl;
 
   const openInNewTab = document.createElement('a');
   openInNewTab.href = blobUrl;
@@ -67,14 +67,14 @@ async function fastpnginfo_parse_image() {
 
   let ZoomeD = false;
 
-  img_el.addEventListener('click', async () => {
+  imgEL.addEventListener('click', async () => {
     if (ZoomeD) return;
-    const ExZdiv = document.querySelector('.fastpnginfo-zoom');
+    const ExZdiv = document.querySelector('.fastpngZoom');
     if (ExZdiv) {
       ExZdiv.remove();
     }
     const Zdiv = document.createElement('div');
-    Zdiv.classList.add('fastpnginfo-zoom');
+    Zdiv.classList.add('fastpngZoom');
     document.body.style.overflow = 'hidden';
 
     Object.assign(Zdiv.style, {
@@ -92,7 +92,7 @@ async function fastpnginfo_parse_image() {
       overflow: 'hidden'
     });
 
-    const Zimg = img_el.cloneNode();
+    const Zimg = imgEL.cloneNode();
 
     Object.assign(Zimg.style, {
       maxWidth: '100%',
@@ -204,7 +204,7 @@ async function fastpnginfo_parse_image() {
 
   if (tags) {
     window.EnCrypt = tags.Encrypt ? tags.Encrypt.description : '';
-    window.EPwdSha = tags.EncryptPwdSha ? tags.EncryptPwdSha.description : '';
+    window.PWSha = tags.EncryptPwdSha ? tags.EncryptPwdSha.description : '';
 
     if (tags.parameters && tags.parameters.description) {
       if (tags.parameters.description.includes("sui_image_params")) {
@@ -240,8 +240,8 @@ async function fastpnginfo_parse_image() {
     } else if (tags["Software"] && tags["Software"].description === "NovelAI" &&
                tags.Comment && tags.Comment.description) {
 
-      window.SfwNAI = tags["Software"] ? tags["Software"].description : '';
-      window.SrcNAI = tags["Source"] ? tags["Source"].description : '';
+      window.softWare = tags["Software"] ? tags["Software"].description : '';
+      window.sourceNAI = tags["Source"] ? tags["Source"].description : '';
 
       const nai = JSON.parse(tags.Comment.description);
       nai.sampler = "Euler";
@@ -260,10 +260,10 @@ async function fastpnginfo_parse_image() {
     }
 
     if (output) {
-      txt_output_el.value = output;
-      updateInput(txt_output_el);
-      fastpnginfoHTML.classList.add('prose');
-      fastpnginfoHTML.innerHTML = plainTextToHTML(output);
+      fastpngRawOutput.value = output;
+      updateInput(fastpngRawOutput);
+      fastpngHTML.classList.add('prose');
+      fastpngHTML.innerHTML = plainTextToHTML(output);
     }
   }
   return tags;
@@ -308,6 +308,7 @@ function convertNAI(input) {
 
 function convertSwarmUI(Sui) {
   let output = "";
+
   if (Sui.prompt) output += `${Sui.prompt}\n`;
   if (Sui.negativeprompt) output += `Negative prompt: ${Sui.negativeprompt}\n`;
   if (Sui.steps) output += `Steps: ${Sui.steps}, `;
@@ -318,8 +319,15 @@ function convertSwarmUI(Sui) {
   if (Sui.width && Sui.height) 
     output += `Size: ${Sui.width}x${Sui.height}, `;
   if (Sui.model) output += `Model: ${Sui.model}, `;
-  if (Sui.vae) output += `VAE: ${Sui.vae}, `;
+  if (Sui.vae) {
+    const vaeParts = Sui.vae.split('/');
+    output += `VAE: ${vaeParts[vaeParts.length - 1]}, `;
+  }
+
+  window.softWare = Sui?.swarm_version ? `SwarmUI ${Sui.swarm_version}` : '';
+
   output = output.trim().replace(/,$/, "");
+
   let otherParams = Object.entries(Sui)
     .filter(([key]) => {
       return ![
@@ -333,11 +341,13 @@ function convertSwarmUI(Sui) {
         "width", 
         "height", 
         "model", 
-        "vae"
+        "vae", 
+        "swarm_version"
       ].includes(key);
     })
     .map(([key, value]) => `${key}: ${value}`)
     .join(", ");
+  
   if (otherParams) {
     output += (output ? ", " : "") + otherParams;
   }
@@ -346,120 +356,157 @@ function convertSwarmUI(Sui) {
 
 function plainTextToHTML(inputs) {
   const EnCrypt = window.EnCrypt;
-  const EPwdSha = window.EPwdSha;
-  const SfwNAI = window.SfwNAI;
-  const SrcNAI = window.SrcNAI;
+  const PWSha = window.PWSha;
+  const sourceNAI = window.sourceNAI;
+  const softWare = window.softWare;
 
   const buttonColor = 'var(--primary-400)';
   const buttonHover = 'var(--primary-600)';
 
-  var SendButton = document.querySelector("#fastpngSendButton");
-  var box = document.querySelector("#fastpnginfo_panel");
+  var fastpngSendButton = document.querySelector("#fastpngSendButton");
+  fastpngSendButton.style.setProperty('border-radius', '0.5rem', 'important');
+
+  var fastpngOutputPanel = document.querySelector("#fastpngOutputPanel");
   var sty = `display: block; margin-bottom: 2px; color: ${buttonColor};`;
   var mTop = "margin-top: 16px;";
 
-  var bS = `
+  var buttonStyle = `
     color: ${buttonColor};
     font-size: 15px;
     font-weight: bold;
     text-align: center;
-    margin-top: -5px;
     margin-bottom: 2px;
     display: block;
     background-color: transparent;
     cursor: pointer;`;
 
-  var pro = `
+  var titlePrompt = `
     <button id="promptButton"
-      class="fastpnginfo_button"
-      style="${bS}; margin-top: 2px; margin-bottom: 2px;"
+      class="fastpngButtons"
+      style="${buttonStyle}; padding-top: 0px; margin-bottom: 2px;"
       title="Copy Prompt">
       Prompt
     </button>`;
 
-  var neg = `
+  var titleNegativePrompt = `
     <button id="negativePromptButton"
-      class="fastpnginfo_button"
-      style="${bS} ${mTop}"
+      class="fastpngButtons"
+      style="${buttonStyle}"
       title="Copy Negative Prompt">
       Negative Prompt
     </button>`;
 
-  var prm = `
+  var titleParams = `
     <button id="paramsButton"
-      class="fastpnginfo_button"
-      style="${bS} ${mTop}"
+      class="fastpngButtons"
+      style="${buttonStyle}"
       title="Copy Parameter Settings">
       Params
     </button>`;
 
-  const ciH = `<b style="${sty} ${mTop}">Civitai Hashes</b>`;
-  const eNC = `<b style="${sty} ${mTop}">Encrypt</b>`;
-  const pWD = `<b style="${sty} ${mTop}">EncryptPwdSha</b>`;
-  const sFW = `<b style="${sty} ${mTop}">Software</b>`;
-  const sRC = `<b style="${sty} ${mTop}">Source</b>`;
+  const titleCivitaiHashes = `<b style="${sty};">Civitai Hashes</b>`;
+  const titleEncrypt = `<b style="${sty};">Encrypt</b>`;
+  const titleSha = `<b style="${sty};">EncryptPwdSha</b>`;
+  const titleSoftware = `<b style="${sty};">Software</b>`;
+  const titleSource = `<b style="${sty};">Source</b>`;
 
   const br = /\n/g;
 
-  if (inputs === undefined || inputs === null || inputs.trim() === '') {
-    box.style.transition = 'none';
-    box.style.opacity = '0';
-    box.classList.remove('show');
-    SendButton.style.display = 'none';
-  } else {
-    if (inputs.trim().includes("Nothing To See Here")) {
-      pro = '';
-      SendButton.style.display = 'none';
-    } else {
-      SendButton.style.display = 'flex';
-    }
-
-    box.classList.add('show');
-    box.style.transition = '';
-    box.style.opacity = '1';
-
-    inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(br, '<br>');
-    inputs = inputs.replace(/Negative prompt:/, neg).replace(/(Steps:|model:)/, match => prm + match);
-    inputs = inputs.replace(/, Hashes:/, ciH);
-
-    if (EnCrypt && EnCrypt.trim() !== '') {
-      inputs += `<br>${eNC}${EnCrypt}`;
-    }
-    if (EPwdSha && EPwdSha.trim() !== '') {
-      inputs += `<br>${pWD}${EPwdSha}`;
-    }
-    if (SfwNAI && SfwNAI.trim() !== '') {
-      inputs += `<br>${sFW}${SfwNAI}`;
-    }
-    if (SrcNAI && SrcNAI.trim() !== '') {
-      inputs += `<br>${sRC}${SrcNAI}`;
-    }
-
-    inputs = inputs.replace(/Seed:\s?(\d+),/gi, function(match, seedNumber) {
-      return `
-        <button id="seedButton"
-          class="fastpnginfo_button"
-          style="color: ${buttonColor};
-                 margin-bottom: -5px;
-                 cursor: pointer;"
-          title="Copy Seed Value">
-          Seed
-        </button>: ${seedNumber},`;
-    });
+  let outputHTML = '';
+  let promptText = '';
+  let negativePromptText = '';
+  let paramsText = '';
+  let hashesText = '';
+  
+  function fastOutput(title, content) {
+    return `<div class="fastpngOutputSection"<p>${title}${content}</p></div>`;
   }
 
-  const txt_output_el = gradioApp().querySelector("#fastpnginfo_geninfo > label > textarea");
+  if (inputs === undefined || inputs === null || inputs.trim() === '') {
+    fastpngOutputPanel.style.transition = 'none';
+    fastpngOutputPanel.style.opacity = '0';
+    fastpngOutputPanel.classList.remove('show');
+    fastpngSendButton.style.display = 'none';
+  } else {
+    fastpngOutputPanel.classList.add('show');
+    fastpngOutputPanel.style.transition = '';
+    fastpngOutputPanel.style.opacity = '1';
+
+    if (inputs.trim().includes("Nothing To See Here")) {
+      titlePrompt = '';
+      fastpngSendButton.style.display = 'none'; 
+      outputHTML = fastOutput('', inputs);
+    } else {
+      fastpngSendButton.style.display = 'flex';
+
+      inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(br, '<br>');
+      inputs = inputs.replace(/Seed:\s?(\d+),/gi, function(match, seedNumber) {
+        return `
+          <button id="seedButton"
+            class="fastpngButtons"
+            style="color: ${buttonColor}; margin-bottom: -5px; cursor: pointer;"
+            title="Copy Seed Value">
+            Seed
+          </button>: ${seedNumber},`;
+      });
+
+      const negativePromptIndex = inputs.indexOf("Negative prompt:");
+      const stepsIndex = inputs.indexOf("Steps:");
+      const hashesIndex = inputs.indexOf("Hashes:");
+
+      if (negativePromptIndex !== -1) {
+        promptText = inputs.substring(0, negativePromptIndex).trim();
+      } else if (stepsIndex !== -1) {
+        promptText = inputs.substring(0, stepsIndex).trim();
+      } else {
+        promptText = inputs.trim();
+      }
+
+      if (negativePromptIndex !== -1 && stepsIndex !== -1 && stepsIndex > negativePromptIndex) {
+        negativePromptText = inputs.slice(negativePromptIndex + "Negative prompt:".length, stepsIndex).trim();
+      }
+
+      if (stepsIndex !== -1) {
+        paramsText = inputs.slice(stepsIndex).trim();
+        if (hashesIndex !== -1 && hashesIndex > stepsIndex) {
+          hashesText = inputs.slice(hashesIndex + "Hashes:".length).trim();
+          paramsText = paramsText.slice(0, hashesIndex - stepsIndex).trim();
+        }
+      } else {
+        paramsText = inputs.trim();
+      }
+
+      const sections = [
+        { title: titlePrompt, content: promptText },
+        { title: titleNegativePrompt, content: negativePromptText },
+        { title: titleParams, content: paramsText },
+        { title: titleCivitaiHashes, content: hashesText },
+        { title: titleSoftware, content: softWare },
+        { title: titleEncrypt, content: EnCrypt },
+        { title: titleSha, content: PWSha },
+        { title: titleSource, content: sourceNAI }
+      ];
+
+      sections.forEach(section => {
+        if (section.content && section.content.trim() !== '') {
+          outputHTML += fastOutput(section.title, section.content);
+        }
+      });
+    }
+  }
+
+  const fastpngRawOutput = gradioApp().querySelector("#fastpnginfo_geninfo > label > textarea");
 
   const fastpngButton = document.createElement("style");
   fastpngButton.type = "text/css";
   fastpngButton.innerText = `
-    .fastpnginfo_button {
+    .fastpngButtons {
       transition: color 0.3s ease;
     }
-    .fastpnginfo_hover {
+    .fastpngButtonsHover {
       color: ${buttonHover} !important;
     }
-    .fastpnginfo_pulse {
+    .fastpngButtonsPulse {
       animation: pulsePULSE 0.8s infinite alternate forwards;
     }
     @keyframes pulsePULSE {
@@ -475,12 +522,12 @@ function plainTextToHTML(inputs) {
   document.addEventListener("click", function (event) {
     function pulseButton(id) {
       var button = document.getElementById(id);
-      button.classList.remove('fastpnginfo_hover');
+      button.classList.remove('fastpngButtonsHover');
       button.style.cursor = 'auto';
-      button.classList.add('fastpnginfo_pulse');
+      button.classList.add('fastpngButtonsPulse');
 
       setTimeout(() => {
-        button.classList.remove('fastpnginfo_pulse');
+        button.classList.remove('fastpngButtonsPulse');
         button.style.cursor = 'pointer';
       }, 1500);
     }
@@ -521,7 +568,7 @@ function plainTextToHTML(inputs) {
 
     if (event.target && event.target.id === "promptButton") {
       pulseButton("promptButton");
-      const text = txt_output_el.value;
+      const text = fastpngRawOutput.value;
       const negativePromptIndex = text.indexOf("Negative prompt:");
       let promptText;
       if (negativePromptIndex !== -1) {
@@ -539,7 +586,7 @@ function plainTextToHTML(inputs) {
 
     if (event.target && event.target.id === "negativePromptButton") {
       pulseButton("negativePromptButton");
-      const text = txt_output_el.value;
+      const text = fastpngRawOutput.value;
       const negativePromptStart = text.indexOf("Negative prompt:");
       const stepsStart = text.indexOf("Steps:");
       if (negativePromptStart !== -1 && stepsStart !== -1 && stepsStart > negativePromptStart) {
@@ -550,7 +597,7 @@ function plainTextToHTML(inputs) {
 
     if (event.target && event.target.id === "paramsButton") {
       pulseButton("paramsButton");
-      const text = txt_output_el.value;
+      const text = fastpngRawOutput.value;
       const stepsStart = text.indexOf("Steps:");
       if (stepsStart !== -1) {
         const paramsText = text.slice(stepsStart).trim();
@@ -560,7 +607,7 @@ function plainTextToHTML(inputs) {
 
     if (event.target && event.target.id === "seedButton") {
       pulseButton("seedButton");
-      const text = txt_output_el.value;
+      const text = fastpngRawOutput.value;
       const seedMatch = text.match(/Seed:\s?(\d+),/i);
       if (seedMatch && seedMatch[1]) {
         const seedText = seedMatch[1].trim();
@@ -571,23 +618,18 @@ function plainTextToHTML(inputs) {
 
   function fastpnginfoHover(button) {
     button.addEventListener('mouseenter', function () {
-      button.classList.add('fastpnginfo_hover');
+      button.classList.add('fastpngButtonsHover');
     });
 
     button.addEventListener('mouseleave', function () {
-      button.classList.remove('fastpnginfo_hover');
+      button.classList.remove('fastpngButtonsHover');
     });
   }
 
   setTimeout(() => {
-    const buttons = document.querySelectorAll('.fastpnginfo_button');
+    const buttons = document.querySelectorAll('.fastpngButtons');
     buttons.forEach(button => fastpnginfoHover(button));
   }, 0);
 
-  return `
-    <div class="fastpnginfo_cont"
-      style="padding: 2px; margin-bottom: -10px;">
-      ${pro}<p>${inputs}</p>
-    </div>
-  `;
+  return `<div class="fastpngHTMLOutput" style="margin-bottom: -8px;">${outputHTML}</div>`;
 }

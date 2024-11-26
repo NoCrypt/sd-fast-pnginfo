@@ -1,8 +1,8 @@
-#fastpnginfo_panel {
+#fastpngOutputPanel {
   opacity: 0;
 }
 
-#fastpnginfo_panel.show {
+#fastpngOutputPanel.show {
   opacity: 1;
   transition: opacity 0.2s ease;
 }
@@ -12,13 +12,30 @@
   margin-top: 5px !important;
 }
 
-#fastpnginfo_image {
+#fastpngImage {
   background: var(--input-background-fill);
   border-radius: 0.5rem !important;
 }
 
-.fastpnginfo_cont {
+.fastpngHTMLOutput {
+  margin-left: 2px !important;
   overflow-wrap: break-word;
   max-width: 100%;
   overflow-x: auto;
+}
+
+.fastpngOutputSection {
+  padding-top: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 1px;
+  background: var(--input-background-fill);
+  border-radius: 0.5rem;
+  border: 2px solid transparent;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+}
+
+.fastpngOutputSection:hover {
+  border: 2px solid var(--primary-400);
 }

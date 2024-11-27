@@ -133,12 +133,8 @@ async function fastpnginfo_parse_image() {
       const imgCenterX = offsetX + centerX;
       const imgCenterY = offsetY + centerY;
 
-      offsetX = e.clientX - 
-        ((e.clientX - imgCenterX) / lastScale) * scale - 
-        centerX;
-      offsetY = e.clientY - 
-        ((e.clientY - imgCenterY) / lastScale) * scale - 
-        centerY;
+      offsetX = e.clientX - ((e.clientX - imgCenterX) / lastScale) * scale - centerX;
+      offsetY = e.clientY - ((e.clientY - imgCenterY) / lastScale) * scale - centerY;
 
       Zimg.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     });

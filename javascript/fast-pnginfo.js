@@ -408,8 +408,42 @@ function plainTextToHTML(inputs) {
   const buttonColor = 'var(--primary-400)';
   const buttonHover = 'var(--primary-600)';
 
-  var fastpngSendButton = document.querySelector("#fastpngSendButton");
-  fastpngSendButton.style.setProperty('border-radius', '0.5rem', 'important');
+  const fastpngSendButton = document.querySelector("#fastpngSendButton");
+  const sendButtonStyles = document.createElement("style");
+  sendButtonStyles.type = "text/css";
+  sendButtonStyles.innerText = `
+    #fastpngSendButton {
+      grid-template-columns: 1fr 1fr !important;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #fastpngSendButton button.svelte-cmf5ev {
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    #fastpngSendButton button.svelte-cmf5ev:nth-child(1) {
+      border-top-left-radius: 0.5rem;
+    }
+
+    #fastpngSendButton button.svelte-cmf5ev:nth-child(2) {
+      border-top-right-radius: 0.5rem;
+    }
+
+    #fastpngSendButton button.svelte-cmf5ev:nth-child(3) {
+      border-bottom-left-radius: 0.5rem;
+    }
+
+    #fastpngSendButton button.svelte-cmf5ev:nth-child(4) {
+      border-bottom-right-radius: 0.5rem;
+    }
+
+    #fastpngSendButton button.svelte-cmf5ev:hover {
+      border-color: var(--primary-400);
+    }
+  `;
+  document.head.appendChild(sendButtonStyles);
 
   var fastpngOutputPanel = document.querySelector("#fastpngOutputPanel");
   var sty = `display: block; margin-bottom: 2px; color: ${buttonColor};`;
@@ -482,7 +516,7 @@ function plainTextToHTML(inputs) {
       fastpngSendButton.style.display = 'none'; 
       outputHTML = fastOutput('', inputs);
     } else {
-      fastpngSendButton.style.display = 'flex';
+      fastpngSendButton.style.display = 'grid';
 
       inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(br, '<br>');
       inputs = inputs.replace(/Seed:\s?(\d+),/gi, function(match, seedNumber) {

@@ -7,14 +7,14 @@ def on_ui_tabs():
     with gr.Blocks(analytics_enabled=False) as fast_pnginfo:
         with FormRow(equal_height=False):
             with FormColumn(variant="compact", scale=3):
-                image = gr.Image(elem_id="fastpnginfo_image", source="upload", interactive=True, type="pil", show_label=False)
+                image = gr.Image(elem_id="fastpngImage", source="upload", interactive=True, type="pil", show_label=False)
 
                 with FormRow(variant="compact", elem_id="fastpngSendButton"):
                     buttons = tempe.create_buttons(["txt2img", "img2img", "inpaint", "extras"])
 
-            with gr.Column(variant="panel", scale=7, elem_id="fastpnginfo_panel"):
-                geninfo = gr.Textbox(elem_id="fastpnginfo_geninfo", label="RAW", visible=False)
-                gr.HTML(elem_id="fastpnginfo_html")
+            with FormColumn(variant="compact", scale=7, elem_id="fastpngOutputPanel"):
+                geninfo = gr.Textbox(elem_id="fastpngGenInfo", label="RAW", visible=False)
+                gr.HTML(elem_id="fastpngHTML")
 
             for tabname, button in buttons.items():
                 tempe.register_paste_params_button(

@@ -4,13 +4,16 @@ The extension uses a dynamically loaded <code>[ExifReader](https://github.com/ma
 Eliminating the need to upload it to a server, resulting in Fast PNG Info.<br>
 This is particularly noticeable when running the webui on online services, such as Google Colab, Kaggle, SageMaker Studio Lab, etc.<br>
 
+- Click one of the buttons: <code>Prompt</code> <code>Negative Prompt</code> <code>Params</code> <code>Seed</code> to copy its raw values.
+- Click the image to open the image viewer, use mousewheel to zoom in and out.
+
 Support:
-- PNG parameters
-- JPEG and Avif userComment
-- Novel AI parameters with brackets conversion
+- PNG parameters and JPEG/WEBP UserComment
+- NovelAI parameters with brackets conversion
+- SwarmUI PNG parameters and JPEG/WEBP UserComment
 
 # Preview
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/8a554ae4-da6f-4396-b9da-be86adf1ef2d", widht=1000px>
+  <img src="https://github.com/user-attachments/assets/8c4139d4-f8a6-45d1-ac19-ad44d84d0959", widht=1000px>
 </p>

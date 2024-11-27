@@ -555,14 +555,12 @@ function plainTextToHTML(inputs) {
     }
 
     .fastpngBorderPulse {
-      animation: pulseBorder 0.8s infinite alternate forwards;
+      animation: pulseBorder 1s infinite alternate forwards;
     }
 
     @keyframes pulseBorder {
       0% {border-color: transparent;}
-      25% {border-color: var(--primary-400);}
-      50% {border-color: transparent;}
-      75% {border-color: var(--primary-400);}
+      50% {border-color: var(--primary-400);}
       100% {border-color: transparent;}
     }
 

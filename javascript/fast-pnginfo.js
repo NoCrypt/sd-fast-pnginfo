@@ -89,7 +89,8 @@ async function fastpnginfo_parse_image() {
       alignItems: 'center',
       zIndex: '9999',
       cursor: 'zoom-out',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      backdropFilter: 'blur(10px)'
     });
 
     const Zimg = imgEL.cloneNode();

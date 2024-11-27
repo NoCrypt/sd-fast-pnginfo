@@ -5,9 +5,9 @@ Eliminating the need to upload it to a server, resulting in Fast PNG Info.<br>
 This is particularly noticeable when running the webui on online services, such as Google Colab, Kaggle, SageMaker Studio Lab, etc.<br>
 
 Support:
-- PNG parameters and JPEG/Avif UserComment
+- PNG parameters and JPEG/WEBP UserComment
 - NovelAI parameters with brackets conversion
-- SwarmUI PNG parameters and JPEG/Avif UserComment
+- SwarmUI PNG parameters and JPEG/WEBP UserComment
 
 # Preview
 

@@ -208,34 +208,27 @@ async function fastpnginfo_parse_image() {
 
     if (tags.parameters && tags.parameters.description) {
       if (tags.parameters.description.includes("sui_image_params")) {
-        const parseDesc = JSON.parse(tags.parameters.description);
-        const Sui = parseDesc["sui_image_params"];
-        output = convertSwarmUI(Sui);
+        const parSing = JSON.parse(tags.parameters.description);
+        const Sui = parSing["sui_image_params"];
+        output = convertSwarmUI(Sui, {});
       } else {
         output = tags.parameters.description;
       }
 
     } else if (tags.UserComment && tags.UserComment.value) {
-      const ray = tags.UserComment.value;
-      const result = [];
-      var ar = ray;
-      var pos = ar.indexOf(0) + 1;
-
-      for (var i = pos; i < ar.length; i += 2) {
-        var inDEX = ar[i];
-        var nEXT = ar[i + 1];
-
-        if (inDEX === 0 && nEXT === 32) {
-          result.push(32);
-          continue;
+      const array = tags.UserComment.value;
+      const UserComments = UserCommentDecoder(array);
+      if (UserComments.includes("sui_image_params")) {
+        const rippin = UserComments.trim().replace(/[\x00-\x1F\x7F]/g, '');
+        const parSing = JSON.parse(rippin);
+        if (parSing["sui_image_params"]) {
+          const Sui = parSing["sui_image_params"];
+          const SuiExtra = parSing["sui_extra_data"] || {};
+          output = convertSwarmUI(Sui, SuiExtra);
         }
-
-        let vaLUE = inDEX * 256 + nEXT;
-        result.push(vaLUE);
+      } else {
+        output = UserComments;
       }
-
-      const userComment = new TextDecoder("utf-16").decode(new Uint16Array(result));
-      output = userComment.trim().replace(/^UNICODE[\x00-\x20]*/, "");
 
     } else if (tags["Software"] && tags["Software"].description === "NovelAI" &&
                tags.Comment && tags.Comment.description) {
@@ -306,13 +299,18 @@ function convertNAI(input) {
   return result;
 }
 
-function convertSwarmUI(Sui) {
+function convertSwarmUI(Sui, extraData = {}) {
   let output = "";
 
   if (Sui.prompt) output += `${Sui.prompt}\n`;
   if (Sui.negativeprompt) output += `Negative prompt: ${Sui.negativeprompt}\n`;
   if (Sui.steps) output += `Steps: ${Sui.steps}, `;
-  if (Sui.sampler) output += `Sampler: ${Sui.sampler}, `;
+  if (Sui.sampler) {
+    Sui.sampler = Sui.sampler.replace(/\beuler\b|\beuler(-\w+)?/gi, (match) => {
+      return match.replace(/euler/i, "Euler");
+    });
+    output += `Sampler: ${Sui.sampler}, `;
+  }
   if (Sui.scheduler) output += `Schedule type: ${Sui.scheduler}, `;
   if (Sui.cfgscale) output += `CFG scale: ${Sui.cfgscale}, `;
   if (Sui.seed) output += `Seed: ${Sui.seed}, `;
@@ -347,11 +345,61 @@ function convertSwarmUI(Sui) {
     })
     .map(([key, value]) => `${key}: ${value}`)
     .join(", ");
-  
-  if (otherParams) {
-    output += (output ? ", " : "") + otherParams;
+
+  let extraParams = Object.entries(extraData)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(", ");
+
+  if (otherParams || extraParams) {
+    output += (output ? ", " : "") + [otherParams, extraParams].filter(Boolean).join(", ");
   }
+
   return output.trim();
+}
+
+function UserCommentDecoder(array) {
+  const result = [];
+  let pos = 7;
+
+  if (array[8] === 123) {
+    for (let i = pos; i < array.length; i+=2) {
+      const inDEX = array[i];
+      const nEXT = array[i + 1];
+      if (inDEX === 0 && nEXT === 32) {
+        result.push(32);
+        continue;
+      }
+      const vaLUE = inDEX * 256 + nEXT;
+      result.push(vaLUE);
+    }
+  } else {
+    for (let i = pos; i < array.length; i++) {
+      if (i === 7 && array[i] === 0) {
+        continue;
+      }
+      if (array[i] === 0) {
+        if (i + 1 < array.length && array[i + 1] === 0) {
+          i++;
+          continue;
+        }
+      }
+      if (i + 1 < array.length) {
+        const inDEX = array[i];
+        const nEXT = array[i + 1];
+
+        if (inDEX === 0 && nEXT === 32) {
+          result.push(32);
+          i++;
+          continue;
+        }
+        const vaLUE = inDEX * 256 + nEXT;
+        result.push(vaLUE);
+        i++;
+      }
+    }
+  }
+  const output = new TextDecoder("utf-16").decode(new Uint16Array(result)).trim();
+  return output.replace(/^UNICODE[\x00-\x20]*/, "");
 }
 
 function plainTextToHTML(inputs) {
@@ -504,71 +552,86 @@ function plainTextToHTML(inputs) {
     .fastpngButtons {
       transition: color 0.3s ease;
     }
+
     .fastpngButtonsHover {
       color: ${buttonHover} !important;
     }
-    .fastpngButtonsPulse {
-      animation: pulsePULSE 0.8s infinite alternate forwards;
+
+    .fastpngBorderPulse {
+      animation: pulseBorder 0.8s infinite alternate forwards;
     }
-    @keyframes pulsePULSE {
-      0% { color: ${buttonColor} !important; }
-      20% { color: ${buttonHover} !important; }
-      40% { color: ${buttonColor} !important; }
-      60% { color: ${buttonHover} !important; }
-      80% { color: ${buttonColor} !important; }
-      100% { color: ${buttonHover} !important; }
-    }`;
+
+    @keyframes pulseBorder {
+      0% {border-color: transparent;}
+      25% {border-color: var(--primary-400);}
+      50% {border-color: transparent;}
+      75% {border-color: var(--primary-400);}
+      100% {border-color: transparent;}
+    }
+
+    .fadeOutBorder {
+      animation: fadeOutBorderColor 1s alternate forwards;
+    }
+
+    @keyframes fadeOutBorderColor {
+      0% {border-color: var(--primary-400);}
+      100% {border-color: transparent;}
+    }
+  `;
+
   document.head.appendChild(fastpngButton);
 
   document.addEventListener("click", function (event) {
-    function pulseButton(id) {
-      var button = document.getElementById(id);
-      button.classList.remove('fastpngButtonsHover');
-      button.style.cursor = 'auto';
-      button.classList.add('fastpngButtonsPulse');
-
+    function pulseBorderSection(button) {
+      var section = button.closest('.fastpngOutputSection');
+      section.classList.add('fastpngBorderPulse');
       setTimeout(() => {
-        button.classList.remove('fastpngButtonsPulse');
-        button.style.cursor = 'pointer';
+        section.classList.remove('fastpngBorderPulse');
+        section.classList.add('fadeOutBorder');
+        setTimeout(() => {
+          section.classList.remove('fadeOutBorder');
+        }, 1000);
       }, 1500);
     }
 
-    function fastpngNotify(msg) {
-      const NoTify = document.createElement('div');
-      NoTify.className = 'copy-NoTify';
-      NoTify.innerText = msg;
-
-      NoTify.style.position = 'fixed';
-      NoTify.style.top = '-50px';
-      NoTify.style.right = '20px';
-      NoTify.style.padding = '5px 5px';
-      NoTify.style.fontSize = '30px';
-      NoTify.style.fontWeight = 'bold';
-      NoTify.style.zIndex = '9999';
-      NoTify.style.opacity = '0';
-      NoTify.style.transition = 'opacity 0.5s, transform 0.5s';
-
-      document.body.appendChild(NoTify);
-      setTimeout(() => {
-        NoTify.style.opacity = '1';
-        NoTify.style.transform = 'translateY(70px)';
-      }, 100);
-      setTimeout(() => {
-        NoTify.style.opacity = '0';
-        NoTify.style.transform = 'translateX(100rem)';
+    const fastpngNotify = {
+      create: function(msg) {
+        const Notify = document.createElement('div');
+        Notify.className = 'copy-NoTify';
+        Notify.innerText = msg;
+        Object.assign(Notify.style, {
+          position: 'fixed',
+          top: '-50px',
+          right: '20px',
+          padding: '5px 5px',
+          fontSize: '30px',
+          fontWeight: 'bold',
+          zIndex: '9999',
+          opacity: '0',
+          transition: 'opacity 0.5s, transform 0.5s'
+        });
+        document.body.appendChild(Notify);
         setTimeout(() => {
-          document.body.removeChild(NoTify);
-        }, 500);
-      }, 1000);
-    }
+          Notify.style.opacity = '1';
+          Notify.style.transform = 'translateY(70px)';
+        }, 100);
+        setTimeout(() => {
+          Notify.style.opacity = '0';
+          Notify.style.transform = 'translateX(100rem)';
+          setTimeout(() => {
+            document.body.removeChild(Notify);
+          }, 500);
+        }, 1000);
+      }
+    };
 
-    function fastpngCopy(CopyCopy) {
+    function fastpngCopy(CopyCopy, whichBorder) {
       navigator.clipboard.writeText(CopyCopy);
-      fastpngNotify("📋");
+      pulseBorderSection(whichBorder);
+      fastpngNotify.create("📋");
     }
 
     if (event.target && event.target.id === "promptButton") {
-      pulseButton("promptButton");
       const negativePromptIndex = OutputRaw.indexOf("Negative prompt:");
       let promptText;
       if (negativePromptIndex !== -1) {
@@ -581,34 +644,31 @@ function plainTextToHTML(inputs) {
           promptText = OutputRaw.trim();
         }
       }
-      fastpngCopy(promptText);
+      fastpngCopy(promptText, event.target);
     }
 
     if (event.target && event.target.id === "negativePromptButton") {
-      pulseButton("negativePromptButton");
       const negativePromptStart = OutputRaw.indexOf("Negative prompt:");
       const stepsStart = OutputRaw.indexOf("Steps:");
       if (negativePromptStart !== -1 && stepsStart !== -1 && stepsStart > negativePromptStart) {
         const negativePromptText = OutputRaw.slice(negativePromptStart + "Negative prompt:".length, stepsStart).trim();
-        fastpngCopy(negativePromptText);
+        fastpngCopy(negativePromptText, event.target);
       }
     }
 
     if (event.target && event.target.id === "paramsButton") {
-      pulseButton("paramsButton");
       const stepsStart = OutputRaw.indexOf("Steps:");
       if (stepsStart !== -1) {
         const paramsText = OutputRaw.slice(stepsStart).trim();
-        fastpngCopy(paramsText);
+        fastpngCopy(paramsText, event.target);
       }
     }
 
     if (event.target && event.target.id === "seedButton") {
-      pulseButton("seedButton");
       const seedMatch = OutputRaw.match(/Seed:\s?(\d+),/i);
       if (seedMatch && seedMatch[1]) {
         const seedText = seedMatch[1].trim();
-        fastpngCopy(seedText);
+        fastpngCopy(seedText, event.target);
       }
     }
   });

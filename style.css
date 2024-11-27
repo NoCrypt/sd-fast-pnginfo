@@ -21,11 +21,10 @@
   margin-left: 2px !important;
   overflow-wrap: break-word;
   max-width: 100%;
-  overflow-x: auto;
 }
 
 .fastpngOutputSection {
-  padding-top: 3px;
+  padding-top: 5px;
   padding-left: 8px;
   padding-right: 8px;
   padding-bottom: 0px;
@@ -33,10 +32,9 @@
   border-radius: 0.5rem;
   border: 2px solid transparent;
   margin-bottom: 8px;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .fastpngOutputSection:hover {
-  border: 2px solid var(--primary-400);
   background: var(--input-background-fill-hover);
 }

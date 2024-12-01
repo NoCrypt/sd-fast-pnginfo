@@ -23,8 +23,9 @@ async function fastpnginfo_parse_image() {
       color: var(--primary-400) !important;
     `;
   }
-  
+
   if (imgEL) {
+    document.removeEventListener("click", window.fastpngEvent);
     imgEL.style.width = "auto";
     imgEL.style.height = "auto";
     imgEL.style.objectFit = "contain";
@@ -43,6 +44,7 @@ async function fastpnginfo_parse_image() {
       }
     };
   } else {
+    document.removeEventListener("click", window.fastpngEvent);
     const fullSizeHeight = getComputedStyle(fastpngImage).getPropertyValue('var(--size-full)').trim();
     fastpngImage.style.height = fullSizeHeight;
     fastpngHTML.innerHTML = plainTextToHTML('');
@@ -99,8 +101,9 @@ async function fastpnginfo_parse_image() {
       maxWidth: '100%',
       maxHeight: '100%',
       objectFit: 'contain',
-      cursor: 'grab',
-      transition: 'transform 0.3s ease'
+      cursor: 'auto',
+      transition: 'transform 1s ease',
+      transform: 'translate(0px, 0px) scale(0)'
     });
 
     Zdiv.appendChild(Zimg);
@@ -111,9 +114,12 @@ async function fastpnginfo_parse_image() {
     let offsetY = 0;
     let lastX = 0;
     let lastY = 0;
-    let Groping = false;
     let GropinTime = null;
     let Groped = false;
+
+    Zimg.onload = function() {
+      Zimg.style.transform = 'translate(0px, 0px) scale(1)';
+    };
 
     Zimg.addEventListener('wheel', (e) => {
       e.preventDefault();
@@ -144,53 +150,60 @@ async function fastpnginfo_parse_image() {
 
       GropinTime = setTimeout(() => {
         Groped = true;
+        Zimg.style.transition = 'transform 60ms ease';
         Zimg.style.cursor = 'grab';
+        lastX = e.clientX - offsetX;
+        lastY = e.clientY - offsetY;
       }, 100);
-
-      lastX = e.clientX - offsetX;
-      lastY = e.clientY - offsetY;
     });
 
-    Zdiv.addEventListener('mousemove', (e) => {
+    Zimg.addEventListener('mousemove', (e) => {
       if (!Groped) return;
-
       e.preventDefault();
-      Groping = true;
 
       const deltaX = e.clientX - lastX;
       const deltaY = e.clientY - lastY;
-
       offsetX = deltaX;
       offsetY = deltaY;
-
-      Zimg.style.transition = '';
       Zimg.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${scale})`;
     });
 
-    ['mouseup', 'mouseleave'].forEach(eventType => {
-      Zdiv.addEventListener(eventType, () => {
-        clearTimeout(GropinTime);
+    Zimg.addEventListener('mouseup', (e) => {
+      clearTimeout(GropinTime);
 
-        if (!Groped) {
-          Zdiv.remove();
-          document.body.style.overflow = 'auto';
-          ZoomeD = false;
-          return;
-        }
+      if (!Groped) {
+        Zimg.onclick = closeZoom();
+        return;
+      }
 
-        Groping = false;
-        Groped = false;
-        Zimg.style.cursor = 'grab';
-      });
+      Groped = false;
+      Zimg.style.cursor = 'auto';
+      Zimg.style.transition = 'transform 0.3s ease';
+    });
+
+    Zimg.addEventListener('mouseleave', (e) => {
+      if (Groped) {
+        lastX = e.clientX - offsetX;
+        lastY = e.clientY - offsetY;
+      }
     });
 
     Zdiv.addEventListener('click', (e) => {
       if (e.target === Zdiv) {
+        closeZoom();
+      }
+    });
+
+    function closeZoom() {
+      Zimg.style.transition = 'transform 0.3s ease';
+      Zimg.style.transform = 'translate(0px, 0px) scale(0)';
+
+      setTimeout(() => {
         Zdiv.remove();
         document.body.style.overflow = 'auto';
         ZoomeD = false;
-      }
-    });
+      }, 300);
+    }
 
     ZoomeD = true;
   });
@@ -254,6 +267,7 @@ async function fastpnginfo_parse_image() {
       updateInput(fastpngRawOutput);
       fastpngHTML.classList.add('prose');
       fastpngHTML.innerHTML = plainTextToHTML(output);
+      document.addEventListener("click", window.fastpngEvent);
     }
   }
   return tags;
@@ -404,6 +418,7 @@ function plainTextToHTML(inputs) {
   const PWSha = window.PWSha;
   const sourceNAI = window.sourceNAI;
   const softWare = window.softWare;
+  
 
   const buttonColor = 'var(--primary-400)';
   const buttonHover = 'var(--primary-600)';
@@ -506,6 +521,7 @@ function plainTextToHTML(inputs) {
     fastpngOutputPanel.style.opacity = '0';
     fastpngOutputPanel.classList.remove('show');
     fastpngSendButton.style.display = 'none';
+
   } else {
     fastpngOutputPanel.classList.add('show');
     fastpngOutputPanel.style.transition = '';
@@ -515,9 +531,9 @@ function plainTextToHTML(inputs) {
       titlePrompt = '';
       fastpngSendButton.style.display = 'none'; 
       outputHTML = fastOutput('', inputs);
+
     } else {
       fastpngSendButton.style.display = 'grid';
-
       inputs = inputs.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(br, '<br>');
       inputs = inputs.replace(/Seed:\s?(\d+),/gi, function(match, seedNumber) {
         return `
@@ -610,7 +626,7 @@ function plainTextToHTML(inputs) {
 
   document.head.appendChild(fastpngButton);
 
-  document.addEventListener("click", function (event) {
+  window.fastpngEvent = function(e) {
     function pulseBorderSection(button) {
       var section = button.closest('.fastpngOutputSection');
       section.classList.add('fastpngBorderPulse');
@@ -624,7 +640,7 @@ function plainTextToHTML(inputs) {
     }
 
     const fastpngNotify = {
-      create: function(msg) {
+      create: function (msg) {
         const Notify = document.createElement('div');
         Notify.className = 'copy-NoTify';
         Notify.innerText = msg;
@@ -660,7 +676,7 @@ function plainTextToHTML(inputs) {
       fastpngNotify.create("📋");
     }
 
-    if (event.target && event.target.id === "promptButton") {
+    if (e.target && e.target.id === "promptButton") {
       const negativePromptIndex = OutputRaw.indexOf("Negative prompt:");
       let promptText;
       if (negativePromptIndex !== -1) {
@@ -673,34 +689,34 @@ function plainTextToHTML(inputs) {
           promptText = OutputRaw.trim();
         }
       }
-      fastpngCopy(promptText, event.target);
+      fastpngCopy(promptText, e.target);
     }
 
-    if (event.target && event.target.id === "negativePromptButton") {
+    if (e.target && e.target.id === "negativePromptButton") {
       const negativePromptStart = OutputRaw.indexOf("Negative prompt:");
       const stepsStart = OutputRaw.indexOf("Steps:");
       if (negativePromptStart !== -1 && stepsStart !== -1 && stepsStart > negativePromptStart) {
         const negativePromptText = OutputRaw.slice(negativePromptStart + "Negative prompt:".length, stepsStart).trim();
-        fastpngCopy(negativePromptText, event.target);
+        fastpngCopy(negativePromptText, e.target);
       }
     }
 
-    if (event.target && event.target.id === "paramsButton") {
+    if (e.target && e.target.id === "paramsButton") {
       const stepsStart = OutputRaw.indexOf("Steps:");
       if (stepsStart !== -1) {
         const paramsText = OutputRaw.slice(stepsStart).trim();
-        fastpngCopy(paramsText, event.target);
+        fastpngCopy(paramsText, e.target);
       }
     }
 
-    if (event.target && event.target.id === "seedButton") {
+    if (e.target && e.target.id === "seedButton") {
       const seedMatch = OutputRaw.match(/Seed:\s?(\d+),/i);
       if (seedMatch && seedMatch[1]) {
         const seedText = seedMatch[1].trim();
-        fastpngCopy(seedText, event.target);
+        fastpngCopy(seedText, e.target);
       }
     }
-  });
+  }
 
   function fastpngHoverButtons(button) {
     button.addEventListener('mouseenter', function () {
